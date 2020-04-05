@@ -3,7 +3,7 @@ This file, written by Andrew H. Pometta, is the file implementing and
 exporting the DeathrollSim class.  An instance of this class corresponds to 
 a single game of deathrolling.
 
-Last updated: 4/3/2020
+Last updated: 4/4/2020
 """
 
 #I don't use Numpy for this class, since it's just unnecessary overhead.
@@ -40,8 +40,6 @@ class DeathrollSim:
 
 		#perform simulation
 		while not self.__roll(): pass
-
-		print("Simulation of {} finished".format(repr(self)))
 
 
 	"""Performs an individual roll during the deathroll game.  Flagging the 
