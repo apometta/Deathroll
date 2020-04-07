@@ -73,3 +73,4 @@ if __name__ == "__main__":
                                      " and use the run_sims "
                                      "function to perform simulations in"
                                      " another Python program.")
+    parser.add_argument("-t", "--time", action="store_true")
