@@ -16,13 +16,28 @@ from sys import argv
 from sys import stderr
 from DeathrollSim import DeathrollSim as dsm
 
+"""Function for checking if a number is a positive integer.  Raises an 
+argparse.ArgumentTypeError exception if it is not.  Only to be used in the 
+main method: the run_sims function will raise a different exception."""
+
+
+def check_posint(n_str):
+    n = int(n_str)
+    if float(n_str) - n != 0:
+        raise argparse.ArgumentTypeError("{} is not an integer".format(n_str))
+    elif n < 1:
+        raise argparse.ArgumentTypeError("{} is not positive".format(n_str))
+    else:
+        return n
+
+
 """Main and only function to initialize data for exporting.  Requires
 range of die sides to test, number of simulations to run per die side, and
 whether to print runtime information.  The default, for arguments not
-provided, are 1-100 sided dice, testing one hundred thousand times per die
-side, and printing information about runtime of the function (as opposed to
+provided, are 1 - 100 sided dice, testing one hundred thousand times per die
+side, and printing information about runtime of the function(as opposed to
 silent output).  Returns a pair of lists.  The first contains, in each index
-n-1 for an n sided die, the probability of the first roller winning.  The
+n - 1 for an n sided die, the probability of the first roller winning.  The
 second contains the average number of rolls per game for the respective index.
 Undefined results if anything other than positive integers for the first 3
 arguments are given."""
@@ -60,7 +75,7 @@ def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=True):
 
     # Print time information if relevant
     if time_info:
-        print("Time elapsed: {:.4f}s.".format(perf_counter()))
+        print("Time elapsed: {:.4f}s.".format(perf_counter() - start_time))
     return ((avg_p1wins, avg_rolls))
 
 """If run as a standalone program, interpret command line arguments as
@@ -80,12 +95,12 @@ if __name__ == "__main__":
     parser.add_argument("-s", action="store",
                         default=100000, help="number of simulations to run "
                         "per n-sided die (default: 100000",
-                        metavar="simulations", type=int)
+                        metavar="simulations", type=check_posint)
     parser.add_argument("min", action="store", help="the smallest (or only) "
-                        "number of sides for all dice", type=int)
+                        "number of sides for all dice", type=check_posint)
     parser.add_argument("max", action="store", help="the largest number of "
                         "sides for all dice", nargs=argparse.REMAINDER,
-                        type=int)
+                        type=check_posint)
     # storing the actual arguments
     args = parser.parse_args()
     # The only thing we have to check manually is whether more arguments
