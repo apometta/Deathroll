@@ -36,7 +36,6 @@ arguments are given."""
 
 
 def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=True):
-    step = 1
     # check values - this local function is slightly different than the one
     # in the main method
 
@@ -54,6 +53,16 @@ def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=True):
     n_min = check_posint(n_min, "n_min")
     n_max = check_posint(n_max, "n_max")
     sim_count = check_posint(sim_count, "sim_count")
+
+    # reverse if arguments are switched
+    step = 1
+    if n_min > n_max:
+        tmp = n_min
+        n_min = n_max
+        n_max = tmp
+        step = -1
+
+    die_range = range(n_min, n_max + 1, step)
     # Begin timing here
     if time_info:
         print("Beginning clock for building Deathroll simulation data with "
@@ -64,7 +73,7 @@ def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=True):
     avg_p1wins = []
     avg_rolls = []
 
-    for n in range(n_min, n_max + 1):  # For all roll of n-sided die
+    for n in die_range:  # For all roll of n-sided die
         p1_wins = 0
         roll_count = 0
         for i in range(sim_count):
@@ -80,7 +89,7 @@ def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=True):
     # Print time information if relevant
     if time_info:
         print("Time elapsed: {:.4f}s.".format(perf_counter() - start_time))
-    return ((avg_p1wins, avg_rolls))
+    return ((die_range, avg_p1wins, avg_rolls))
 
 """If run as a standalone program, interpret command line arguments as
 arguments to the function above, and print the data for each index in each
