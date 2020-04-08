@@ -32,10 +32,26 @@ class DRSimulateFileError(OSError):
 
 """Function to run Deathroll simulations across a range of possible die 
 sides.  Runs a number of simulations (equal to sim_count) across all possible 
-die sides from n_min to n_max."""
+die sides from n_min to n_max.
+
+n_min: The smallest n for any n-sided die to simulate.
+n_max: The largest n for any n_sided die to simulate.  Can be less than, equal 
+       to or greater than n_min.  Default: n_min
+sim_count: The number of simulations to run per die side.
+time_info: If flagged as true, print information about time elasped during 
+           simulation runtime.
+outfile: If time_info is flagged, outfile is a open file object (NOT a path) 
+         to output the data to.
+
+If n_min, n_max or sim_count are not castable as integers, or if they are not 
+positive, a DRSimulateValueError is raised.  If time_info cannot be cast as a 
+boolean, a DRSimulateValueError is raised.  If printing to the outfile would 
+otherwise cause an OSError, it is reraised as a DRSimualteFileError with the 
+same message.
+"""
 
 
-def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=False,
+def run_sims(n_min, n_max=None, sim_count=100000, time_info=False,
              outfile=stdout):
     # check values - this local function is slightly different than the one
     # in the main method
@@ -55,6 +71,12 @@ def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=False,
     n_max = check_posint(n_max, "n_max")
     sim_count = check_posint(sim_count, "sim_count")
 
+    try:
+        time_info = bool(time_info)
+    except ValueError:
+        raise DRSimulateValueError("Cannot cast {} as boolean".format(
+            time_info))
+
     # reverse if arguments are switched
     step = 1
     if n_min > n_max:
@@ -66,9 +88,12 @@ def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=False,
     die_range = range(n_min, n_max + 1, step)
     # Begin timing here
     if time_info:
-        print("Beginning clock for building Deathroll simulation data with "
-              "{} simulations for each n-sided die "
-              "for all n in [{}, {}).".format(sim_count, n_min, n_max))
+        try:
+            print("Beginning clock for building Deathroll simulation data "
+                  "with {} simulations for each n-sided die "
+                  "for all n in [{}, {}).".format(sim_count, n_min, n_max))
+        except OSError as ose:
+            raise DRSimualteFileError(ose.__str__())
         start_time = perf_counter()
 
     avg_p1wins = []
@@ -89,7 +114,10 @@ def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=False,
 
     # Print time information if relevant
     if time_info:
-        print("Time elapsed: {:.4f}s.".format(perf_counter() - start_time))
+        try:
+            print("Time elapsed: {:.4f}s.".format(perf_counter() - start_time))
+        except OSError as ose:
+            raise DRSimualteFileError(ose.__str__())
     return ((die_range, avg_p1wins, avg_rolls))
 
 """If run as a standalone program, interpret command line arguments as
