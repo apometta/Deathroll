@@ -13,6 +13,7 @@ want anything more complicated (spreadsheet/database), write it yourself.
 
 from time import perf_counter  # new version of time.clock()
 from sys import argv
+from sys import stdout
 from sys import stderr
 import DeathrollSim as drs
 
@@ -23,19 +24,19 @@ import DeathrollSim as drs
 class DRSimulateValueError(ValueError):
     pass
 
-"""Main and only function to initialize data for exporting.  Requires
-range of die sides to test, number of simulations to run per die side, and
-whether to print runtime information.  The default, for arguments not
-provided, are 1 - 100 sided dice, testing one hundred thousand times per die
-side, and printing information about runtime of the function(as opposed to
-silent output).  Returns a pair of lists.  The first contains, in each index
-n - 1 for an n sided die, the probability of the first roller winning.  The
-second contains the average number of rolls per game for the respective index.
-Undefined results if anything other than positive integers for the first 3
-arguments are given."""
+"""Custom exception class for file handling."""
 
 
-def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=True):
+class DRSimulateFileError(OSError):
+    pass
+
+"""Function to run Deathroll simulations across a range of possible die 
+sides.  Runs a number of simulations (equal to sim_count) across all possible 
+die sides from n_min to n_max."""
+
+
+def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=False,
+             outfile=stdout):
     # check values - this local function is slightly different than the one
     # in the main method
 
