@@ -24,6 +24,13 @@ number of rolls, and optionally, the exact sequence of rolls.
 Relevant public properties:
   initial_n: the number of sides on the first die rolled.
   roll_count: the number of rolls performed in the game
+  winner: an integer, 1 or 2, corresponding to whether the first or second 
+          roller won respectively
+  roll_sequence: if log_rolls is True on creation, roll_sequence is a list of 
+                 numbers, corresponding to the exact sequence of rolls in the 
+                 game, necessarily beginning wth initial_n and ending with 1.
+                 If log_rolls is False or not specified, roll_sequence has a 
+                 value of None.
 
 """
 
