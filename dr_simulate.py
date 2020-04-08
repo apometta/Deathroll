@@ -14,22 +14,14 @@ want anything more complicated (spreadsheet/database), write it yourself.
 from time import perf_counter  # new version of time.clock()
 from sys import argv
 from sys import stderr
-from DeathrollSim import DeathrollSim as dsm
-
-"""Function for checking if a number is a positive integer.  Raises an 
-argparse.ArgumentTypeError exception if it is not.  Only to be used in the 
-main method: the run_sims function will raise a different exception."""
+import DeathrollSim as drs
 
 
-def check_posint(n_str):
-    n = int(n_str)
-    if float(n_str) - n != 0:
-        raise argparse.ArgumentTypeError("{} is not an integer".format(n_str))
-    elif n < 1:
-        raise argparse.ArgumentTypeError("{} is not positive".format(n_str))
-    else:
-        return n
+"""Custom exception class for ValueError."""
 
+
+class DRSimulateValueError(ValueError):
+    pass
 
 """Main and only function to initialize data for exporting.  Requires
 range of die sides to test, number of simulations to run per die side, and
@@ -44,6 +36,24 @@ arguments are given."""
 
 
 def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=True):
+    step = 1
+    # check values - this local function is slightly different than the one
+    # in the main method
+
+    def check_posint(arg, param):
+        try:
+            arg = int(arg)
+        except ValueError:
+            raise DRSimulateValueError("Argument {} for {} cannot be cast "
+                                       "as an integer".format(arg, param))
+        if arg < 1:
+            raise DRSimulateValueError(
+                "Argument {} for {} is not positive".format(arg, param))
+        return arg
+
+    n_min = check_posint(n_min, "n_min")
+    n_max = check_posint(n_max, "n_max")
+    sim_count = check_posint(sim_count, "sim_count")
     # Begin timing here
     if time_info:
         print("Beginning clock for building Deathroll simulation data with "
@@ -54,18 +64,12 @@ def run_sims(n_min=1, n_max=100, sim_count=100000, time_info=True):
     avg_p1wins = []
     avg_rolls = []
 
-    # Manually input data for a 1-sided die.
-    if n_min == 1:
-        avg_p1wins.append(0)
-        avg_rolls.append(0)
-        n_min += 1
-
     for n in range(n_min, n_max + 1):  # For all roll of n-sided die
         p1_wins = 0
         roll_count = 0
         for i in range(sim_count):
             # Run a simulation and log the data
-            sim = dsm(n)
+            sim = drs.DeathrollSim(n)
             p1_wins += 1 if sim.winner == 1 else 0
             roll_count += sim.roll_count
 
@@ -85,6 +89,19 @@ arguments or with -h to see a usage statement."""
 if __name__ == "__main__":
     # First step: parse and evaluate arguments.
     import argparse
+
+    # local function not needed outside of this part
+    def check_posint(n_str):
+        n = int(n_str)
+        if float(n_str) != n:
+            raise argparse.ArgumentTypeError(
+                "{} is not an integer".format(n_str))
+        elif n < 1:
+            raise argparse.ArgumentTypeError(
+                "{} is not positive".format(n_str))
+        else:
+            return n
+
     parser = argparse.ArgumentParser(description="Run Deathroll simulations.",
                                      epilog="Alternatively, import this module"
                                      " and use the run_sims "
