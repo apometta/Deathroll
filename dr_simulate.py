@@ -13,6 +13,7 @@ want anything more complicated (spreadsheet/database), write it yourself.
 
 from time import perf_counter  # new version of time.clock()
 from sys import argv
+from sys import stderr
 from DeathrollSim import DeathrollSim as dsm
 
 """Main and only function to initialize data for exporting.  Requires
@@ -67,10 +68,35 @@ arguments to the function above, and print the data for each index in each
 list, as well as the timing information if relevant.  Run with no command line
 arguments or with -h to see a usage statement."""
 if __name__ == "__main__":
+    # First step: parse and evaluate arguments.
     import argparse
     parser = argparse.ArgumentParser(description="Run Deathroll simulations.",
                                      epilog="Alternatively, import this module"
                                      " and use the run_sims "
                                      "function to perform simulations in"
                                      " another Python program.")
-    parser.add_argument("-t", "--time", action="store_true")
+    parser.add_argument("-t", "--time", action="store_true",
+                        help="print runtime diagnostics")
+    parser.add_argument("-s", action="store",
+                        default=100000, help="number of simulations to run "
+                        "per n-sided die (default: 100000",
+                        metavar="simulations", type=int)
+    parser.add_argument("min", action="store", help="the smallest (or only) "
+                        "number of sides for all dice", type=int)
+    parser.add_argument("max", action="store", help="the largest number of "
+                        "sides for all dice", nargs=argparse.REMAINDER,
+                        type=int)
+    # storing the actual arguments
+    args = parser.parse_args()
+    # The only thing we have to check manually is whether more arguments
+    # were supplied.  We mimic the argparse error handling if this is the
+    # case
+    if len(args.max) == 0:
+        args.max = args.min  # sets the var as a number, not a list
+    elif len(args.max) == 1:
+        args.max = args.max[0]  # an advantage of dynamic typing
+    else:
+        print("{}: error: too many arguments".format(argv[0]),
+              file=stderr)
+    # the args variable now has the min, max, simulations and time properties
+    # set properly
