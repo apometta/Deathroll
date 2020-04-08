@@ -21,15 +21,24 @@ The DeathrollSim class corresponds to a single game of deathrolling.  It
 contains relevant information such as who won, the starting roll number, the 
 number of rolls, and optionally, the exact sequence of rolls.
 
+Relevant public properties:
+  initial_n: the number of sides on the first die rolled.
+  roll_count: the number of rolls performed in the game
+
 """
 
 
 class DeathrollSim:
-    """The constructor for the DeathrollSim object actually does most of the 
-    heavy lifting of the object.  In other words, most of the time complexity 
-    of making a DeathrollSim object, and doing the actual simulation, happens 
-    entirely within the constructor.  The rest of the methods in the class 
-    are really for representing the object."""
+    """The constructor both initializes the object and performs the 
+    simulation.  There is no need to call an additional method after creating 
+    the object - it is returned as a complete game - but be aware that even 
+    calling the constructor with a sufficiently high start_roll can impact 
+    your program's run duration.
+
+    start_roll: a positive integer corresponding to the number of sides of 
+                        the initial die
+    log_rolls: a boolean of whether or not to store the exact sequence of 
+               rolls in a game in a list.  Default False"""
 
     def __init__(self, start_roll, log_rolls=False):
         # check for valid input
@@ -55,6 +64,8 @@ class DeathrollSim:
         self.winner = 0
         if self.__detailed:
             self.roll_sequence = []  # regular list, not numpy list
+        else:
+            self.roll_sequence = None
 
         # perform simulation
         while not self.__roll():
