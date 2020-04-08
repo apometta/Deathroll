@@ -10,6 +10,12 @@ a single game of deathrolling.
 from random import seed
 from random import randint
 
+"""Custom exception class that is a derivation of the base ValueError."""
+
+
+class DeathrollValueError(ValueError):
+    pass
+
 """
 The DeathrollSim class corresponds to a single game of deathrolling.  It 
 contains relevant information such as who won, the starting roll number, the 
@@ -26,9 +32,21 @@ class DeathrollSim:
     are really for representing the object."""
 
     def __init__(self, start_roll, log_rolls=False):
-        # internal properties
+        # check for valid input
+        try:
+            start_roll = int(start_roll)
+        except ValueError:
+            raise DeathrollValueError("start_roll must be castable as an int")
+        if start_roll < 1:
+            raise DeathrollValueError("start_roll must be positive")
+        try:
+            log_rolls = bool(log_rolls)
+        except ValueError:
+            raise DeathrollValueError("log_rolls must be castable as a bool")
+
+            # internal properties
         self.__finished = False
-        self.__first_rolling = False
+        self.__first_rolling = True
         self.__detailed = log_rolls
         self.__n = start_roll
         # public properties
@@ -55,7 +73,7 @@ class DeathrollSim:
             self.roll_sequence.append(self.__n)
         if self.__n == 1:
             self.__finished = True
-            self.winner = 1 if self.__first_rolling else 2
+            self.winner = 2 if self.__first_rolling else 1
         else:
             self.__first_rolling = not self.__first_rolling
         return self.__finished
