@@ -123,12 +123,17 @@ def run_sims(n_min, n_max=None, sim_count=100000, time_info=False,
 """If run as a standalone program, interpret command line arguments as
 arguments to the function above, and print the data for each index in each
 list, as well as the timing information if relevant.  Run with no command line
-arguments or with -h to see a usage statement."""
+arguments or with -h to see a usage statement.  Output is to stderr: use 
+traditional command line output funnelling/piping if you want anything else 
+with it."""
 if __name__ == "__main__":
     # First step: parse and evaluate arguments.
     import argparse
 
-    # local function not needed outside of this part
+    # function given to argparse to test validity of input.  Excpects a string
+    # of the argument supplied, and throws an argparse exception if it is not
+    # valid.  Returns the number as an integer if it is (casts floats as
+    # integers).
     def check_posint(n_str):
         n = int(n_str)
         if float(n_str) != n:
