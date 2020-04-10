@@ -30,29 +30,29 @@ class DRSimulateValueError(ValueError):
 class DRSimulateFileError(OSError):
     pass
 
-"""Function to run Deathroll simulations across a range of possible die 
-sides.  Runs a number of simulations (equal to sim_count) across all possible 
-die sides from n_min to n_max.
+"""Function to perform Monte Carlo simulation to find the winrate of the 
+first roller in a deathroll game and the average number of rolls per game 
+given n, where n is the number of sides of the first die rolled.
 
-n_min: The smallest n for any n-sided die to simulate.
-n_max: The largest n for any n_sided die to simulate.  Can be less than, equal 
-       to or greater than n_min.  Default: n_min
-sim_count: The number of simulations to run per die side.
-time_info: If flagged as true, print information about time elasped during 
-           simulation runtime.
-outfile: If time_info is flagged, outfile is a open file object (NOT a path) 
-         to output the data to.
+n: The number of sides of the first die rolled.  Mandatory argument.
+simulations: the number of simulations to run.  Default 100,000.
+time_info: If supplied as true, prints the amount of time taken to run the 
+           simulation to the open file object passed in to outfile.
+outfile: The open file object to print the data to.
 
-If n_min, n_max or sim_count are not castable as integers, or if they are not 
-positive, a DRSimulateValueError is raised.  If time_info cannot be cast as a 
-boolean, a DRSimulateValueError is raised.  If printing to the outfile would 
-otherwise cause an OSError, it is reraised as a DRSimualteFileError with the 
-same message.
+Returns a pair, the first of which is a float corresponding to the probability 
+of the first player winning, and the second of which is the average number of 
+die rolls per game.
+
+n and simulations are cast as integers, and time_info is cast as a boolean.  
+If they cannot be cast as such, or if n or simulations are not positive, then 
+a DRSimulateValueError, an extension of ValueError, is raised.  If any 
+OSError occurs when printing to outfile, then an extension error called 
+DRSimulateFileError is raised.
 """
 
 
-def run_sims(n_min, n_max=None, sim_count=100000, time_info=False,
-             outfile=stdout):
+def deathroll_mc(n, simulations=1_000_000, time_info=False, outfile=stdout):
     # check values - this local function is slightly different than the one
     # in the main method
 
@@ -67,9 +67,8 @@ def run_sims(n_min, n_max=None, sim_count=100000, time_info=False,
                 "Argument {} for {} is not positive".format(arg, param))
         return arg
 
-    n_min = check_posint(n_min, "n_min")
-    n_max = check_posint(n_max, "n_max")
-    sim_count = check_posint(sim_count, "sim_count")
+    n = check_posint(n, "n")
+    simulations = check_posint(simulations, "simulations")
 
     try:
         time_info = bool(time_info)
@@ -77,48 +76,31 @@ def run_sims(n_min, n_max=None, sim_count=100000, time_info=False,
         raise DRSimulateValueError("Cannot cast {} as boolean".format(
             time_info))
 
-    # reverse if arguments are switched
-    step = 1
-    if n_min > n_max:
-        tmp = n_min
-        n_min = n_max
-        n_max = tmp
-        step = -1
-
-    die_range = range(n_min, n_max + 1, step)
     # Begin timing here
     if time_info:
         try:
-            print("Beginning clock for building Deathroll simulation data "
-                  "with {} simulations for each n-sided die "
-                  "for all n in [{}, {}).".format(sim_count, n_min, n_max))
+            print("Beginning Monte Carlo simulation for {} deathrolls of "
+                  "initial roll of {}-sided die.".format(n, simulations))
         except OSError as ose:
             raise DRSimualteFileError(ose.__str__())
         start_time = perf_counter()
 
-    avg_p1wins = []
-    avg_rolls = []
-
-    for n in die_range:  # For all roll of n-sided die
-        p1_wins = 0
-        roll_count = 0
-        for i in range(sim_count):
-            # Run a simulation and log the data
-            sim = drs.DeathrollSim(n)
-            p1_wins += 1 if sim.winner == 1 else 0
-            roll_count += sim.roll_count
-
-        # Average it and place the die data in the appropriate index
-        avg_p1wins.append(p1_wins / sim_count)
-        avg_rolls.append(roll_count / sim_count)
+    # perform simulation
+    p1_wins = 0
+    roll_count = 0
+    for i in range(simulations):
+        sim = drs.DeathrollSim(n)
+        p1_wins += 1 if sim.winner == 1 else 0
+        roll_count += sim.roll_count
 
     # Print time information if relevant
     if time_info:
         try:
-            print("Time elapsed: {:.4f}s.".format(perf_counter() - start_time))
+            print("Time elapsed: {:.3f}s.".format(perf_counter() - start_time))
         except OSError as ose:
             raise DRSimualteFileError(ose.__str__())
-    return ((die_range, avg_p1wins, avg_rolls))
+
+    return (p1_wins / simulations, roll_count / simulations)
 
 """If run as a standalone program, interpret command line arguments as
 arguments to the function above, and print the data for each index in each
@@ -147,7 +129,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Run Deathroll simulations.",
                                      epilog="Alternatively, import this module"
-                                     " and use the run_sims "
+                                     " and use the deathroll_mc "
                                      "function to perform simulations in"
                                      " another Python program.")
     parser.add_argument("-t", "--time", action="store_true",
