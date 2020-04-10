@@ -12,9 +12,7 @@ want anything more complicated (spreadsheet/database), write it yourself.
 """
 
 from time import perf_counter  # new version of time.clock()
-from sys import argv
-from sys import stdout
-from sys import stderr
+import sys
 import DeathrollSim as drs
 
 
@@ -52,11 +50,12 @@ DRSimulateFileError is raised.
 """
 
 
-def deathroll_mc(n, simulations=1_000_000, time_info=False, outfile=stdout):
+def deathroll_mc(n, simulations=1_000_000, time_info=False,
+                 outfile=sys.stdout):
     # check values - this local function is slightly different than the one
     # in the main method
 
-    def check_posint(arg, param):
+    def posint(arg, param):
         try:
             arg = int(arg)
         except ValueError:
@@ -67,8 +66,8 @@ def deathroll_mc(n, simulations=1_000_000, time_info=False, outfile=stdout):
                 "Argument {} for {} is not positive".format(arg, param))
         return arg
 
-    n = check_posint(n, "n")
-    simulations = check_posint(simulations, "simulations")
+    n = posint(n, "n")
+    simulations = posint(simulations, "simulations")
 
     try:
         time_info = bool(time_info)
@@ -102,21 +101,19 @@ def deathroll_mc(n, simulations=1_000_000, time_info=False, outfile=stdout):
 
     return (p1_wins / simulations, roll_count / simulations)
 
-"""If run as a standalone program, interpret command line arguments as
-arguments to the function above, and print the data for each index in each
-list, as well as the timing information if relevant.  Run with no command line
-arguments or with -h to see a usage statement.  Output is to stderr: use 
-traditional command line output funnelling/piping if you want anything else 
-with it."""
+"""If run as a standalone program, take in options and input into the 
+deathroll_mc function.  Run the program with the sole option -h to see a 
+usage statement.  Output is to sys.stdout: use traditional command line 
+piping/output redirection to control this."""
 if __name__ == "__main__":
     # First step: parse and evaluate arguments.
     import argparse
-
     # function given to argparse to test validity of input.  Excpects a string
     # of the argument supplied, and throws an argparse exception if it is not
     # valid.  Returns the number as an integer if it is (casts floats as
     # integers).
-    def check_posint(n_str):
+
+    def posint(n_str):
         n = int(n_str)
         if float(n_str) != n:
             raise argparse.ArgumentTypeError(
@@ -135,25 +132,8 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--time", action="store_true",
                         help="print runtime diagnostics")
     parser.add_argument("-s", action="store",
-                        default=100000, help="number of simulations to run "
-                        "per n-sided die (default: 100000",
-                        metavar="simulations", type=check_posint)
-    parser.add_argument("min", action="store", help="the smallest (or only) "
-                        "number of sides for all dice", type=check_posint)
-    parser.add_argument("max", action="store", help="the largest number of "
-                        "sides for all dice", nargs=argparse.REMAINDER,
-                        type=check_posint)
-    # storing the actual arguments
-    args = parser.parse_args()
-    # The only thing we have to check manually is whether more arguments
-    # were supplied.  We mimic the argparse error handling if this is the
-    # case
-    if len(args.max) == 0:
-        args.max = args.min  # sets the var as a number, not a list
-    elif len(args.max) == 1:
-        args.max = args.max[0]  # an advantage of dynamic typing
-    else:
-        print("{}: error: too many arguments".format(argv[0]),
-              file=stderr)
-    # the args variable now has the min, max, simulations and time properties
-    # set properly
+                        default="hi", help="number of simulations to run "
+                        "per n-sided die (default: 100000)",
+                        metavar="simulations", type=posint)
+    parser.add_argument("n", action="store", help="the smallest (or only) "
+                        "number of sides for all dice", type=posint)
