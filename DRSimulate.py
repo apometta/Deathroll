@@ -35,8 +35,9 @@ given n, where n is the number of sides of the first die rolled.
 n: The number of sides of the first die rolled.  Mandatory argument.
 simulations: the number of simulations to run.  Default 100,000.
 time_info: If supplied as true, prints the amount of time taken to run the
-           simulation to the open file object passed in to outfile.
-outfile: The open file object to print the data to.
+           simulation to the open file object passed in to outfile.  Default 
+           false.
+outfile: The open file object to print the data to.  Default sys.stdout.
 
 Returns a pair, the first of which is a float corresponding to the probability
 of the first player winning, and the second of which is the average number of
@@ -104,10 +105,41 @@ def deathroll_mc(n, simulations=100_000, time_info=False,
     # returns a pair of floats
     return (p1_wins / simulations, roll_count / simulations)
 
+"""Function to perform deathroll simulations on a range of numbers.
+Effectively runs deathroll_mc on numpy.arange(n_min, n_max, step).  Also
+optionally prints time information for the whole process.
+
+n_min: The bottom end of the range, inclusive.  Default: 1.
+n_max: the upper end of the range, exclusive.
+step: The difference between each successive element in the range.  Default 1.
+time_info: If supplied as true, prints the amount of time taken to run the
+           simulation to the open file object passed in to outfile.  Default 
+           false.
+outfile: The open file object to print the data to.  Default sys.stdout.
+
+If n_min or n_max are not positive, if n_min, n_max or step cannot be cast
+as an integer, or if time_info cannot be cast as a boolean, then
+a DRSimulateValueError, an extension of ValueError, is raised.  If any
+OSError occurs when printing to outfile, then an extension error called
+DRSimulateFileError is raised.
+"""
+
+
+def deathroll_mc_range(n_min, n_max=None, step=1, time=False,
+                       outfile=sys.stdout):
+    # to simulate Python's range function and numpy's arange function, we
+    # have the second argument represented by input if only one argument is
+    # supplied
+    if n_max == None:
+        n_min, n_max = 1, n_min
+
+    pass
+
+
 """If run as a standalone program, take in options and input into the
-deathroll_mc function.  Run the program with the sole option -h to see a
+deathroll_mc function.  Run the program with the sole option - h to see a
 usage statement.  Output is to sys.stdout: use traditional command line
-piping/output redirection to control this."""
+piping / output redirection to control this."""
 if __name__ == "__main__":
     # First step: parse and evaluate arguments.
     import argparse
@@ -142,6 +174,8 @@ if __name__ == "__main__":
                         "number of sides for all dice", type=posint)
 
     args = parser.parse_args()
+    # TODO: add option to take in range of arguments.  More annoying to do
+    # perfectly with argparse than it seems
 
     # Run simulation and print relevant data
     data = deathroll_mc(args.n, args.s, args.time)
