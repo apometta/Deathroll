@@ -28,6 +28,20 @@ class DRSimulateValueError(ValueError):
 class DRSimulateFileError(OSError):
     pass
 
+"""Local private function for testing if a number is a positive integer."""
+
+
+def __posint(arg, param):
+    try:
+        arg = int(arg)
+    except ValueError:
+        raise DRSimulateValueError("Argument {} for {} cannot be cast "
+                                   "as an integer".format(arg, param))
+    if arg < 1:
+        raise DRSimulateValueError(
+            "Argument {} for {} is not positive".format(arg, param))
+    return arg
+
 """Function to perform Monte Carlo simulation to find the winrate of the
 first roller in a deathroll game and the average number of rolls per game
 given n, where n is the number of sides of the first die rolled.
@@ -56,19 +70,8 @@ def deathroll_mc(n, simulations=100_000, time_info=False,
     # check values - raises a DRSimulateValueError if the numbers inputted
     # aren't positive integers, or if time_info can't be casted as a boolean
 
-    def posint(arg, param):
-        try:
-            arg = int(arg)
-        except ValueError:
-            raise DRSimulateValueError("Argument {} for {} cannot be cast "
-                                       "as an integer".format(arg, param))
-        if arg < 1:
-            raise DRSimulateValueError(
-                "Argument {} for {} is not positive".format(arg, param))
-        return arg
-
-    n = posint(n, "n")
-    simulations = posint(simulations, "simulations")
+    n = __posint(n, "n")
+    simulations = __posint(simulations, "simulations")
 
     try:
         time_info = bool(time_info)
