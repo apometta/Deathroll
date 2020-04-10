@@ -14,7 +14,7 @@ want anything more complicated (spreadsheet/database), write it yourself.
 from time import perf_counter  # new version of time.clock()
 import sys
 import DeathrollSim as drs
-
+import numpy as np
 
 """Custom exception class for ValueError."""
 
@@ -79,32 +79,29 @@ def deathroll_mc(n, simulations=100_000, time_info=False,
         raise DRSimulateValueError("Cannot cast {} as boolean".format(
             time_info))
 
-    # Begin timing here
-    if time_info:
-        try:
-            print("Beginning Monte Carlo simulation for {} deathrolls of "
+    try:
+        # Begin clock
+        if time_info:
+            print("Beginning Monte Carlo simulation for {} deathrolls for "
                   "initial roll of {}-sided die.".format(simulations, n),
                   file=outfile)
-        except OSError as ose:
-            # Pass along an error with the same string
-            raise DRSimualteFileError(ose.__str__())
-        start_time = perf_counter()
+            start_time = perf_counter()
 
-    # perform simulation
-    p1_wins = 0
-    roll_count = 0
-    for i in range(simulations):
-        sim = drs.DeathrollSim(n)
-        p1_wins += 1 if sim.winner == 1 else 0
-        roll_count += sim.roll_count
+        # perform simulation
+        p1_wins = 0
+        roll_count = 0
+        for i in range(simulations):
+            sim = drs.DeathrollSim(n)
+            p1_wins += 1 if sim.winner == 1 else 0
+            roll_count += sim.roll_count
 
-    # Print time information if relevant
-    if time_info:
-        try:
+        # Print time information if relevant
+        if time_info:
             print("Time elapsed: {:.3f}s.".format(perf_counter() - start_time),
                   file=outfile)
-        except OSError as ose:
-            raise DRSimualteFileError(ose.__str__())
+    except OSError as ose:
+        raise DRSimualteFileError(ose.__str__())
+
     # returns a pair of floats
     return (p1_wins / simulations, roll_count / simulations)
 
@@ -132,7 +129,7 @@ printing to the file, a DRSimulateFileError is raised.
 
 
 def deathroll_mc_range(n_min, n_max=None, step=1, simulations=100_000,
-                       time=False, outfile=sys.stdout):
+                       time_info=False, outfile=sys.stdout):
     # to simulate Python's range function and numpy's arange function, we
     # have the second argument represented by input if only one argument is
     # supplied
@@ -140,8 +137,8 @@ def deathroll_mc_range(n_min, n_max=None, step=1, simulations=100_000,
         n_min, n_max = 1, n_min
 
     # Check arguments
-    n_min, n_max = __posint(n_min), __posint(n_max)
-    simulations = __posint(simulations)
+    n_min, n_max = __posint(n_min, "n_min"), __posint(n_max, "n_max")
+    simulations = __posint(simulations, "simulations")
 
     # We check step manually, since it can be negative
     try:
@@ -155,6 +152,33 @@ def deathroll_mc_range(n_min, n_max=None, step=1, simulations=100_000,
         raise DRSimulateValueError("Cannot cast {} as boolean".format(
             time_info))
 
+    try:
+        # Begin clock
+        if time_info:
+            print("Beginning Monte Carlo simulation for {} deathrolls for "
+                  "initial roll of n-sided die, for all in [{}, {}) with "
+                  "successive change of {}.".format(simulations, n_min,
+                                                    n_max, step))
+            start_time = perf_counter()
+
+        # run simulations
+        data = np.array([])
+        n_range = np.arange(n_min, n_max, step)
+        for n in n_range:
+            d_n = deathroll_mc(n, simulations)
+            data = np.append(data, (n, d_n[0], d_n[1]))
+
+        # reshape the data to a 2D array
+        data = data.reshape(len(n_range), 3)
+
+        # stop the clock
+        if time_info:
+            print("Time elapsed: {:.3f}s.".format(perf_counter() - start_time),
+                  file=outfile)
+    except OSError as ose:
+        raise DRSimualteFileError(ose.__str__())
+
+    return data
 
 """If run as a standalone program, take in options and input into the
 deathroll_mc function.  Run the program with the sole option - h to see a
