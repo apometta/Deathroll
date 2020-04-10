@@ -120,23 +120,40 @@ time_info: If supplied as true, prints the amount of time taken to run the
            false.
 outfile: The open file object to print the data to.  Default sys.stdout.
 
-If n_min or n_max are not positive, if n_min, n_max or step cannot be cast
-as an integer, or if time_info cannot be cast as a boolean, then
-a DRSimulateValueError, an extension of ValueError, is raised.  If any
-OSError occurs when printing to outfile, then an extension error called
-DRSimulateFileError is raised.
+The return value is a 2D Numpy array.  For each entry along the 0th axis, 
+the 0th index is the given n in the range, the 1st index is the first roller's 
+win probability, and the 2nd index is the average number of rolls.
+
+n_min, n_max, and simulations must be positive.  n_min, n_max, step and 
+simulations must be castable as integers, and time must be castable as a 
+boolean.  Otherwise, a DRSimulateValueError is raised.  If any error occurs 
+printing to the file, a DRSimulateFileError is raised.
 """
 
 
-def deathroll_mc_range(n_min, n_max=None, step=1, time=False,
-                       outfile=sys.stdout):
+def deathroll_mc_range(n_min, n_max=None, step=1, simulations=100_000,
+                       time=False, outfile=sys.stdout):
     # to simulate Python's range function and numpy's arange function, we
     # have the second argument represented by input if only one argument is
     # supplied
     if n_max == None:
         n_min, n_max = 1, n_min
 
-    pass
+    # Check arguments
+    n_min, n_max = __posint(n_min), __posint(n_max)
+    simulations = __posint(simulations)
+
+    # We check step manually, since it can be negative
+    try:
+        step = int(step)
+    except ValueError:
+        raise DRSimulateValueError("Cannot cast step as an integer.")
+
+    try:
+        time_info = bool(time_info)
+    except ValueError:
+        raise DRSimulateValueError("Cannot cast {} as boolean".format(
+            time_info))
 
 
 """If run as a standalone program, take in options and input into the
