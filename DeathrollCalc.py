@@ -14,8 +14,17 @@ N is the user's inputted maximum n.
 For reference, the formula for all positive integer n > 1 is:
 
 P(n) = c_n(n/[(n^2)-1]) where P(1) = 1 and 
-c_n = 1 + sum[i=2 to n-1](1/i(sigma[j=2 to i](P(j)))) + 
+c(n) = 1 + sum[i=2 to n-1](1/i(sigma[j=2 to i](P(j)))) + 
       1/n(sigma[j=2 to n-1](P(j)))
+Alternatively, c can be defined recursively as such:
+c(n) = c(n-1) + (1/(n-1))sigma[j=2 to n-1](P(j)) + (1/n)P(n-1) where c(2) = 1
+
 
 Sorry if my notation sucks.
+
+The strategy to calculate the values effeciently quite obviously utilizes 
+dynamic programming, seeing as P(n) is a recursive piecewise function, to 
+which P(k) for any k requires knowledge of all P(l) for l in [1, k-1].  We 
+use one list to keep track of the running data for P(n) for quick reference, 
+and another counter to evaluate c(n) as n progresses.
 """
