@@ -26,5 +26,27 @@ The strategy to calculate the values effeciently quite obviously utilizes
 dynamic programming, seeing as P(n) is a recursive piecewise function, to 
 which P(k) for any k requires knowledge of all P(l) for l in [1, k-1].  We 
 use one list to keep track of the running data for P(n) for quick reference, 
-and another counter to evaluate c(n) as n progresses.
+and another few variables to keep track of c(n) as n progresses.
 """
+
+import numpy as np
+
+# These global variables will be used to store a counters for our data as
+# we progress
+
+# this is the probability of the first player LOSING at the given index, where
+# the index i is for a game with starting roll i + 1 (e.g. the 0th index is
+# for games with a starting roll of 1, etc.).  The data for 1-sided die is
+# input manually.
+p_n = np.array([1], dtype=float)
+
+# this is the list to keep track of c(n) as n progresses, in a similar manner
+# to p_n.  Technically by the "proper" notation c(1) and c(2) should be 1,
+# but c(1) being 0.5 is necessary to make the recursion work.  Nonetheless,
+# we can define it properly and just never reference the 0th index
+c_n = np.array([1, 1], dtype=float)
+
+# One frequently used note is sum from i=2 to n - 1 of P(i).  It is faster to
+# keep a running tally of this as we progress rather than an operation that
+# iterates through the p_n array constantly.
+sig_p_n = 0.0
