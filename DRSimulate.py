@@ -28,32 +28,32 @@ class DRSimulateValueError(ValueError):
 class DRSimulateFileError(OSError):
     pass
 
-"""Function to perform Monte Carlo simulation to find the winrate of the 
-first roller in a deathroll game and the average number of rolls per game 
+"""Function to perform Monte Carlo simulation to find the winrate of the
+first roller in a deathroll game and the average number of rolls per game
 given n, where n is the number of sides of the first die rolled.
 
 n: The number of sides of the first die rolled.  Mandatory argument.
 simulations: the number of simulations to run.  Default 100,000.
-time_info: If supplied as true, prints the amount of time taken to run the 
+time_info: If supplied as true, prints the amount of time taken to run the
            simulation to the open file object passed in to outfile.
 outfile: The open file object to print the data to.
 
-Returns a pair, the first of which is a float corresponding to the probability 
-of the first player winning, and the second of which is the average number of 
+Returns a pair, the first of which is a float corresponding to the probability
+of the first player winning, and the second of which is the average number of
 die rolls per game.
 
-n and simulations are cast as integers, and time_info is cast as a boolean.  
-If they cannot be cast as such, or if n or simulations are not positive, then 
-a DRSimulateValueError, an extension of ValueError, is raised.  If any 
-OSError occurs when printing to outfile, then an extension error called 
+n and simulations are cast as integers, and time_info is cast as a boolean.
+If they cannot be cast as such, or if n or simulations are not positive, then
+a DRSimulateValueError, an extension of ValueError, is raised.  If any
+OSError occurs when printing to outfile, then an extension error called
 DRSimulateFileError is raised.
 """
 
 
-def deathroll_mc(n, simulations=1_000_000, time_info=False,
+def deathroll_mc(n, simulations=100_000, time_info=False,
                  outfile=sys.stdout):
-    # check values - this local function is slightly different than the one
-    # in the main method
+    # check values - raises a DRSimulateValueError if the numbers inputted
+    # aren't positive integers, or if time_info can't be casted as a boolean
 
     def posint(arg, param):
         try:
@@ -79,8 +79,10 @@ def deathroll_mc(n, simulations=1_000_000, time_info=False,
     if time_info:
         try:
             print("Beginning Monte Carlo simulation for {} deathrolls of "
-                  "initial roll of {}-sided die.".format(n, simulations))
+                  "initial roll of {}-sided die.".format(simulations, n),
+                  file=outfile)
         except OSError as ose:
+            # Pass along an error with the same string
             raise DRSimualteFileError(ose.__str__())
         start_time = perf_counter()
 
@@ -95,15 +97,16 @@ def deathroll_mc(n, simulations=1_000_000, time_info=False,
     # Print time information if relevant
     if time_info:
         try:
-            print("Time elapsed: {:.3f}s.".format(perf_counter() - start_time))
+            print("Time elapsed: {:.3f}s.".format(perf_counter() - start_time),
+                  file=outfile)
         except OSError as ose:
             raise DRSimualteFileError(ose.__str__())
-
+    # returns a pair of floats
     return (p1_wins / simulations, roll_count / simulations)
 
-"""If run as a standalone program, take in options and input into the 
-deathroll_mc function.  Run the program with the sole option -h to see a 
-usage statement.  Output is to sys.stdout: use traditional command line 
+"""If run as a standalone program, take in options and input into the
+deathroll_mc function.  Run the program with the sole option -h to see a
+usage statement.  Output is to sys.stdout: use traditional command line
 piping/output redirection to control this."""
 if __name__ == "__main__":
     # First step: parse and evaluate arguments.
@@ -132,8 +135,16 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--time", action="store_true",
                         help="print runtime diagnostics")
     parser.add_argument("-s", action="store",
-                        default="hi", help="number of simulations to run "
+                        default=100_000, help="number of simulations to run "
                         "per n-sided die (default: 100000)",
                         metavar="simulations", type=posint)
     parser.add_argument("n", action="store", help="the smallest (or only) "
                         "number of sides for all dice", type=posint)
+
+    args = parser.parse_args()
+
+    # Run simulation and print relevant data
+    data = deathroll_mc(args.n, args.s, args.time)
+    print("With initial die of {} sides, player 1 wins {:.3%} of the time "
+          "with an average of {:.4f} rolls per game.".format(args.n,
+                                                             data[0], data[1]))
