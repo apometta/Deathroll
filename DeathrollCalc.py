@@ -46,7 +46,28 @@ __p_n = np.array([1], dtype=float)
 # we can define it properly and just never reference the 0th index
 __c_n = np.array([1, 1], dtype=float)
 
-# One frequently used note is sum from i=2 to n - 1 of P(i).  It is faster to
-# keep a running tally of this as we progress rather than an operation that
-# iterates through the p_n array constantly.
-__sig_p_n = 0.0
+# This array represents, for each index i, the sum off all P(k) for which k is in
+# the set [2, k-1].  Used for more efficienctly calculating c(n), avoiding an
+# O(n) procedure for each calculation
+__sig_p_n = np.array([0, 0], dtype=float)
+
+"""Custom exception class for ValueError."""
+
+
+class DeathrollCalcValueError(ValueError):
+    pass
+
+
+"""Local private function for testing if a number is a positive integer."""
+
+
+def __posint(arg, param):
+    try:
+        arg = int(arg)
+    except ValueError:
+        raise DeathrollCalcValueError("Argument {} for {} cannot be cast "
+                                      "as an integer".format(arg, param))
+    if arg < 1:
+        raise DeathrollCalcValueError(
+            "Argument {} for {} is not positive".format(arg, param))
+    return arg
