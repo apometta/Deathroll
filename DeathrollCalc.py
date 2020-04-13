@@ -117,14 +117,10 @@ def __c(n):
     try:
         return __c_n[n - 1]
     except IndexError:
-        # we were doing this a recursive way before but ran into problems, so
-        # I'm going to do it the manual way for now
+        # the manual way - revert to this if the recursive method doesn't work
         mid = 0
         for i in range(2, n):
             mid += ((1 / i) * __sig_p(i))
         total = 1 + mid + ((1 / n) * __sig_p(n - 1))
         __c_n = np.append(__c_n, total)
         return total
-
-
-print(__p(3))
