@@ -47,9 +47,9 @@ __p_n = np.array([1], dtype=float)
 __c_n = np.array([1, 1], dtype=float)
 
 # This array represents, for each index i, the sum off all P(k) for which k is
-# in the set [2, k-1].  Used for more efficienctly calculating c(n), avoiding
+# in the set [2, k].  Used for more efficienctly calculating c(n), avoiding
 # an O(n) procedure for each calculation
-__sig_p_n = np.array([0, 0], dtype=float)
+__sig_p_n = np.array([0], dtype=float)
 
 """Custom exception class for ValueError."""
 
@@ -74,7 +74,7 @@ def __posint(arg, param):
 
 
 """Function for either fetching or, if not previously requested, calculating 
-the sum of all P(k) in the range [2, k-1]."""
+the sum of all P(k) in the range [2, k]."""
 
 
 def __sig_p(n):
@@ -82,13 +82,12 @@ def __sig_p(n):
     global __sig_p_n
     try:
         return __sig_p_n[n - 1]
-    except IndexError:
-        # We haven't done this yet, so we calculate it
+    except IndexError:  # We haven't done this yet, so we calculate it
         # this is the manual way:
         # assert len(__p_n) <= n
         # total = np.sum(__p_n[1:n])
         # the recursive way
-        total = __sig_p(n - 1) + __p_n(n - 1)
+        total = __sig_p(n - 1) + __p(n)
         __sig_p_n = np.append(__sig_p_n, total)  # update cache
         return total
 
@@ -98,7 +97,14 @@ P(n)."""
 
 
 def __p(n):
-    pass
+    n = __posint(n, "n")
+    global __p_n
+    try:
+        return __p_n[n - 1]
+    except IndexError:  # calculate new P(n)
+        total = __c(n) * (n / ((n**2) - 1))
+        __p_n = np.append(__p_n, total)
+        return total
 
 
 """Function for either fetching or, if not previously requested, calculating 
@@ -106,4 +112,19 @@ c(n)."""
 
 
 def __c(n):
-    pass
+    n = __posint(n, "n")
+    global __c_n, __sig_p_n
+    try:
+        return __c_n[n - 1]
+    except IndexError:
+        # we were doing this a recursive way before but ran into problems, so
+        # I'm going to do it the manual way for now
+        mid = 0
+        for i in range(2, n):
+            mid += ((1 / i) * __sig_p(i))
+        total = 1 + mid + ((1 / n) * __sig_p(n - 1))
+        __c_n = np.append(__c_n, total)
+        return total
+
+
+print(__p(3))
