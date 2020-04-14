@@ -5,7 +5,7 @@ DeathrollSim.py and DRSimulate.py, this file does not actualy simulate a game
 of deathrolling - rather, it mathematically calculates the exact probability
 (or as close to the exact as your computer, OS and Python 3 can get).
 
-The details of deriving the math formula will be relegated to another
+The details of deriving the math formulas will be relegated to another
 document.
 
 The strategy to calculate the values effeciently quite obviously utilizes
@@ -13,6 +13,11 @@ dynamic programming, seeing as P_l1(n) is a recursive piecewise function, to
 which P_l1(k) for any k requires knowledge of all P_l1(m) for m in [1, k-1].  
 We use one list to keep track of the running data for P_l1(n) for quick 
 reference, and another few variables to keep track of c_p(n) as n progresses.
+
+For finding the expected number of rolls per game, a nearly identical 
+approach is used, but a small difference in the formula has relatively 
+important applications that make it worth segmenting the two tasks as separate 
+areas.
 """
 
 import numpy as np
@@ -27,12 +32,27 @@ import numpy as np
 __p_l1_n = np.array([1], dtype=float)
 
 # this is the list to keep track of c_p(n) as n progresses, in a similar manner
-# to p_l1_n.
+# to p_l1_n.  Manually inputting 2 makes our recursive formula for c_p(n)
+# work as expected
 __c_p_n = np.array([1, 1], dtype=float)
 
 # This array represents, for each index i, the sum off all P_l1(k) for which k
 # is in the range [2, k] INCLUSIVE.  For efficient calculating of c_p(n)
 __sig_p_l1_n = np.array([0], dtype=float)
+
+# The below three arrays are for R(n), the average number of rolls per game.
+# The relevant coefficient is called c_r(n), and the cache for R(n) will be
+# stored in r_n
+
+# We will, completely aribtrarily, declare R(1) to be 1.  You can also declare
+# it so be 0.
+__r_n = np.array([1], dtype=float)
+
+# c_r(1) is less arbitrary, as it is technically correct.  c_r(2) is manually
+# input to ensure our recursive formula works, similar to c_p_n
+__c_r_n = np.array([1, 1], dtype=float)
+
+__sig_r_n = np.array([0], dtype=float)
 
 """Custom exception class for ValueError."""
 
@@ -88,7 +108,7 @@ def __p_l1(n):
 
 
 """Function for either fetching or, if not previously requested, calculating 
-c(n)."""
+c_p(n)."""
 
 
 def __c_p(n):
@@ -103,4 +123,50 @@ def __c_p(n):
         last = ((1 / n) * __sig_p_l1(n - 1))
         total = __c_p(n - 1) + mid + last
         __c_p_n = np.append(__c_p_n, total)
+        return total
+
+
+"""Function for either fetching or, if not previously requested, caluclating 
+the sum of all R(k) in the range [2, k]."""
+
+
+def __sig_r(n):
+    n = __posint(n)
+    global __sig_r_n
+    try:
+        return __sig_r_n[n - 1]
+    except IndexError:
+        total = __sig_r(n - 1) + __r(n)
+        __sig_r_n = np.append(__sig_r_n, total)
+        return total
+
+
+"""Function for either fetching or, if not previously requested, calculating 
+R(n)."""
+
+
+def __r(n):
+    n = __posint(n)
+    global __r_n
+    try:
+        return __r_n[n - 1]
+    except IndexError:
+        total = __c_r(n) * (n / (n - 1))
+        __r_n = np.append(__r_n, total)
+        return total
+
+
+"""Function for either fetching or, if not previously requested, caluclating 
+c_r(n)."""
+
+
+def __c_r(n):
+    n = __posint(n)
+    global __c_r_n, __sig_r_n
+    try:
+        return __c_r_n[n - 1]
+    # recursive definition of c_r(n) based off of c_r(n - 1)
+    except IndexError:  # is not necessary
+        total = 1 + ((1 / n) * __sig_r(n - 1))
+        __c_r_n = np.append(__c_r_n, total)
         return total
