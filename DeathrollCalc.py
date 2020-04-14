@@ -17,8 +17,7 @@ P(n) = c_n(n/[(n^2)-1]) where P(1) = 1 and
 c(n) = 1 + sum[i=2 to n-1](1/i(sigma[j=2 to i](P(j)))) +
       1/n(sigma[j=2 to n-1](P(j)))
 Alternatively, c can be defined recursively as such:
-c(n) = c(n-1) + (1/(n-1))sigma[j=2 to n-1](P(j)) + (1/n)P(n-1) where c(2) = 1
-
+c(n) = c(n-1) + (1/(n-1))P(n-1) + (1/n)(sigma[j=2 to n-1](P(j))) where c(2) = 1
 
 Sorry if my notation sucks.
 
@@ -117,10 +116,10 @@ def __c(n):
     try:
         return __c_n[n - 1]
     except IndexError:
-        # the manual way - revert to this if the recursive method doesn't work
-        mid = 0
-        for i in range(2, n):
-            mid += ((1 / i) * __sig_p(i))
-        total = 1 + mid + ((1 / n) * __sig_p(n - 1))
+        # the recursive way - ONLY works when n >= 3
+        assert n >= 3
+        mid = ((1 / (n - 1)) * __p(n - 1))
+        last = ((1 / n) * __sig_p(n - 1))
+        total = __c(n - 1) + mid + last
         __c_n = np.append(__c_n, total)
         return total
