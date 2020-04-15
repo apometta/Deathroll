@@ -123,4 +123,16 @@ def __r(n):
         __r_n = np.append(__r_n, total)
         return total
 
-print(__r(5))
+"""User-accessible functions begin here.  They are mostly wrappers around the above 
+functions in one way or another."""
+
+"""Function for getting P_w1(n) for a single value of n.  Raises a 
+DeathrollCalcValueError if n is not positive, or not castable as an integer."""
+
+
+def p_w1(n):
+    return 1 - __p_l1(n)
+
+
+"""Function for getting a range of values for P, in the range [m, n).  Raises 
+DeathrolLCalcValueError if either would be invalid arguments for p_w1()."""
