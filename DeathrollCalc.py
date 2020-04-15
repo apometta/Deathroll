@@ -6,18 +6,11 @@ of deathrolling - rather, it mathematically calculates the exact probability
 (or as close to the exact as your computer, OS and Python 3 can get).
 
 The details of deriving the math formulas will be relegated to another
-document.
-
-The strategy to calculate the values effeciently quite obviously utilizes
-dynamic programming, seeing as P_l1(n) is a recursive piecewise function, to
-which P_l1(k) for any k requires knowledge of all P_l1(m) for m in [1, k-1].  
-We use one list to keep track of the running data for P_l1(n) for quick 
-reference, and another few variables to keep track of c_p(n) as n progresses.
+document.  Since our solution involves dynamic programming, we will 
+continually keep track of a summation as our calculations progress.
 
 For finding the expected number of rolls per game, a nearly identical 
-approach is used, but a small difference in the formula has relatively 
-important applications that make it worth segmenting the two tasks as separate 
-areas.
+approach is used, but a small difference in the formula.
 """
 
 import numpy as np
@@ -31,14 +24,9 @@ import numpy as np
 # input manually.
 __p_l1_n = np.array([1], dtype=float)
 
-# this is the list to keep track of c_p(n) as n progresses, in a similar manner
-# to p_l1_n.  Manually inputting 2 makes our recursive formula for c_p(n)
-# work as expected
-__c_p_n = np.array([1, 1], dtype=float)
-
-# This array represents, for each index i, the sum off all P_l1(k) for which k
-# is in the range [2, k] INCLUSIVE.  For efficient calculating of c_p(n)
-__sig_p_l1_n = np.array([0], dtype=float)
+# This keeps track of the sum of 1 - P(k) for all k in the range [2, k]
+# INCLUSIVE.  Used for more efficiently calculating P(k+1).
+__sig_p_w1_n = np.array([0], dtype=float)
 
 # The below three arrays are for R(n), the average number of rolls per game.
 # The relevant coefficient is called c_r(n), and the cache for R(n) will be
@@ -48,10 +36,8 @@ __sig_p_l1_n = np.array([0], dtype=float)
 # it so be 0.
 __r_n = np.array([1], dtype=float)
 
-# c_r(1) is less arbitrary, as it is technically correct.  c_r(2) is manually
-# input to ensure our recursive formula works, similar to c_p_n
-__c_r_n = np.array([1, 1], dtype=float)
-
+# The sum R(k) for all k in the inclusive range [2, k].  Index 0 is for n = 1,
+# which isn't in the range and thus it's 0.
 __sig_r_n = np.array([0], dtype=float)
 
 """Custom exception class for ValueError."""
@@ -77,18 +63,19 @@ def __posint(arg):
 
 
 """Function for either fetching or, if not previously requested, calculating 
-the sum of all P_l1(k) in the range [2, k]."""
+the sum of all P_w1(k) in the range [2, k].  Note that P_w1(n) is just 
+1 - P_l1(n)."""
 
 
-def __sig_p_l1(n):
+def __sig_p_w1(n):
     n = __posint(n)
-    global __sig_p_l1_n
+    global __sig_p_w1_n
     try:
-        return __sig_p_l1_n[n - 1]
+        return __sig_p_w1_n[n - 1]
     except IndexError:  # We haven't done this yet, so we calculate it
         # the recursive way
-        total = __sig_p_l1(n - 1) + __p_l1(n)
-        __sig_p_l1_n = np.append(__sig_p_l1_n, total)  # update cache
+        total = __sig_p_w1(n - 1) + (1 - __p_l1(n))
+        __sig_p_w1_n = np.append(__sig_p_w1_n, total)  # update cache
         return total
 
 
@@ -102,27 +89,8 @@ def __p_l1(n):
     try:
         return __p_l1_n[n - 1]
     except IndexError:  # calculate new P_l1(n)
-        total = __c_p(n) * (n / ((n**2) - 1))
+        total = (2 + __sig_p_w1(n - 1)) / (n + 1)
         __p_l1_n = np.append(__p_l1_n, total)
-        return total
-
-
-"""Function for either fetching or, if not previously requested, calculating 
-c_p(n)."""
-
-
-def __c_p(n):
-    n = __posint(n)
-    global __c_p_n, __sig_p_l1_n
-    try:
-        return __c_p_n[n - 1]
-    except IndexError:
-        # the recursive way - ONLY works when n >= 3
-        assert n >= 3
-        mid = ((1 / (n - 1)) * __p_l1(n - 1))
-        last = ((1 / n) * __sig_p_l1(n - 1))
-        total = __c_p(n - 1) + mid + last
-        __c_p_n = np.append(__c_p_n, total)
         return total
 
 
@@ -151,22 +119,8 @@ def __r(n):
     try:
         return __r_n[n - 1]
     except IndexError:
-        total = __c_r(n) * (n / (n - 1))
+        total = (n + __sig_r(n - 1)) / (n - 1)
         __r_n = np.append(__r_n, total)
         return total
 
-
-"""Function for either fetching or, if not previously requested, caluclating 
-c_r(n)."""
-
-
-def __c_r(n):
-    n = __posint(n)
-    global __c_r_n, __sig_r_n
-    try:
-        return __c_r_n[n - 1]
-    # recursive definition of c_r(n) based off of c_r(n - 1)
-    except IndexError:  # is not necessary
-        total = 1 + ((1 / n) * __sig_r(n - 1))
-        __c_r_n = np.append(__c_r_n, total)
-        return total
+print(__r(5))
