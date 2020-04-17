@@ -14,6 +14,7 @@ approach is used, but a small difference in the formula.
 """
 
 import numpy as np
+from collections.abc import Iterable
 
 # These global variables will be used to store a counters for our data as
 # we progress
@@ -126,62 +127,44 @@ def __r(n):
 """User-accessible functions begin here.  They are mostly wrappers around the
 above functions in one way or another."""
 
-"""Function for getting P_w1(n) for a single value of n.  Raises a
-DeathrollCalcValueError if n is not positive, or not castable as an integer."""
+"""Function for getting P_w1(n).  This can be either a number or any iterable
+data structure, including an np.ndarray.  If a valid iterable argument is
+given, the returned result is always an np.ndarray of the results of P_w1(k)
+for each k in the argument, in the order given.  If the iterable argument is
+unordered (e.g. a set), the order is not defined.  Should any argument to be
+passed into P_w1 not be positive, or not be castable as an integer, a
+DeathrollCalcValueError is returned."""
 
 
 def p1_winrate(n):
-    return 1 - __p_l1(n)
+    # handle the instance of a single value being given.  if it's not a valid
+    # input, __p_l1 will raise the error
+    if not isinstance(n, Iterable):
+        return 1 - __p_l1(n)
+    else:
+        # do the same for an iterable input really.  If they give something
+        # like a dictionary or set, it's their own fault for not ordering it
+        data = np.array([])
+        for i in n:
+            data = np.append(data, 1 - __p_l1(i))
+        return data
 
 
-"""Function for getting P_w2(n) for a single value of n.  Raises a
-DeathrollCalcValueError if n is not positive, or not castable as an integer."""
+"""Same as p1_winrate, but for player 2.  Takes identical arguments."""
 
 
 def p2_winrate(n):
-    return __p_l1(n)
-
-
-"""Function for getting a range of values for P, in the range [m, n) with a
-difference between each integer by value step.  Default step of 1, or negative
-1 if m > n.  Default m of 1 if only one argument supplied.  Raises a
-DeathrollCalcValueError should any of the arguments not be castable as an
-integer, or if either m or n are not positive."""
-
-
-def p1_winrate_range(m, n=None, step=1):
-    if n == None:
-        m, n = 1, m
-    if n != 0:
-        # manually skip checking for 0, since it's allowed for n (not for m)
-        n = __posint(n, "n")
-    m = __posint(m, "m")
-    try:
-        step = int(step)
-    except ValueError:
-        raise DeathrollCalcValueError(
-            "Argument {} for step not castable as an integer".format(step))
-    __p_l1(max(m, n))  # ensure that all relevant values are calculated
-    if m > n and step == 1:
-        step = -1
-
-    print(m, n, step)
-    # 0 is a valid input for n, but we have to do it this way or else the
-    # slicing doesn't work right
-    data = __p_l1_n[m - 1: n - 1: step] if n > 0 else __p_l1_n[m - 1::step]
-    return 1 - data
-
-
-"""Same as p1_winrate_range, but for player 2's winrate."""
-
-
-def p2_winrate_range(m, n=None, step=1):
     return 1 - p1_winrate_range(m, n, step)
 
-"""Function for getting R(n) at a given value.   Returns
-DeathrollCalcValueError if n is not positive, or castable as an integer."""
+"""Function for getting R(n) at a given value.   Otherwise similar arguments 
+and behavior as p1_winrate."""
 
 
 def avg_rolls(n):
-    n = __posint(n)
-    return __r(n)
+    if not isinstance(n, Iterable):
+        return __r(n)
+    else:
+        data = np.array([])
+        for i in n:
+            data = np.append(data, __r(i))
+        return data
