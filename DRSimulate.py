@@ -15,6 +15,7 @@ from time import perf_counter  # new version of time.clock()
 import sys
 import DeathrollSim as drs
 import numpy as np
+from collections.abc import Iterable
 
 """Custom exception class for ValueError."""
 
@@ -42,143 +43,43 @@ def __posint(arg, param):
             "Argument {} for {} is not positive".format(arg, param))
     return arg
 
-"""Function to perform Monte Carlo simulation to find the winrate of the
-first roller in a deathroll game and the average number of rolls per game
-given n, where n is the number of sides of the first die rolled.
+"""This function performs Monte Carlo simulation of a large amount of 
+deathroll games, and returns a 2D numpy.ndarray corresponding to results of 
+the simulation.  Each list on the zeroth axis of this array is a pair, the 
+first of which corresponds to the first player's winrate for a given starting 
+die of n sides, and the second is the average number of rolls.
 
-n: The number of sides of the first die rolled.  Mandatory argument.
-simulations: the number of simulations to run.  Default 100,000.
-time_info: If supplied as true, prints the amount of time taken to run the
-           simulation to the open file object passed in to outfile.  Default 
-           false.
-outfile: The open file object to print the data to.  Default sys.stdout.
+n: the number of sides on the initial die rolled.  This can either be a 
+single positive scalar, or a data structure that is Iterable (e.g. a list, 
+tuple, numpy.ndarray).  If it is an iterable data type, each element within 
+it will be considered an input for n, and the returned value will have as 
+many pairs as there are elements in n, with the ith index corresponding to 
+the number at n[i].  The returned numpy.ndarray is always a 2D array 
+regardless of what data type was inputted.
+time_all: whether or not to print timing information (how long it took to 
+perform ALL of the simulations) about the process as a whole (not each 
+individual value for n) to outfile.  Default False.
+simulations: the number of simulations to perform for each n.  Default 100,000.
+time_each: whether to print timing information (how long it took to perform 
+the simulations) to the file object passed in to outfile.  Unlike time_all, 
+this prints the time for all simulations for each individual possible n, as 
+opposed to the entirety of the simulation process.  If n is not iterable, this 
+argument is ignored. Default False.
+outfile: the open file object (NOT pathname or string) to print timing info 
+to.  If neither time_each or time_all is specified, this option is ignored.  
+Default sys.stdout.
 
-Returns a pair, the first of which is a float corresponding to the probability
-of the first player winning, and the second of which is the average number of
-die rolls per game.
-
-n and simulations are cast as integers, and time_info is cast as a boolean.
-If they cannot be cast as such, or if n or simulations are not positive, then
-a DRSimulateValueError, an extension of ValueError, is raised.  If any
-OSError occurs when printing to outfile, then an extension error called
-DRSimulateFileError is raised.
+If simulations, n itself (not iterable) or any element within (iterable) 
+cannot be casted as an integer, or is not positive, or if time_all or 
+time_each cannot be casted as booleans, a DRSimulateValueError is raised.  If 
+any OSError occurrs when attempting to print, a DRSimulateFileError is raised.
 """
 
 
-def deathroll_mc(n, simulations=100_000, time_info=False,
+def deathroll_mc(n, simulations=100_000, time_all=False, time_each=False,
                  outfile=sys.stdout):
-    # check values - raises a DRSimulateValueError if the numbers inputted
-    # aren't positive integers, or if time_info can't be casted as a boolean
 
-    n = __posint(n, "n")
-    simulations = __posint(simulations, "simulations")
-
-    try:
-        time_info = bool(time_info)
-    except ValueError:
-        raise DRSimulateValueError("Cannot cast {} as boolean".format(
-            time_info))
-
-    try:
-        # Begin clock
-        if time_info:
-            print("Beginning Monte Carlo simulation for {} deathrolls for "
-                  "initial roll of {}-sided die.".format(simulations, n),
-                  file=outfile)
-            start_time = perf_counter()
-
-        # perform simulation
-        p1_wins = 0
-        roll_count = 0
-        for i in range(simulations):
-            sim = drs.DeathrollSim(n)
-            p1_wins += 1 if sim.winner == 1 else 0
-            roll_count += sim.roll_count
-
-        # Print time information if relevant
-        if time_info:
-            print("Time elapsed: {:.3f}s.".format(perf_counter() - start_time),
-                  file=outfile)
-    except OSError as ose:
-        raise DRSimualteFileError(ose.__str__())
-
-    # returns a pair of floats
-    return (p1_wins / simulations, roll_count / simulations)
-
-"""Function to perform deathroll simulations on a range of numbers.
-Effectively runs deathroll_mc on numpy.arange(n_min, n_max, step).  Also
-optionally prints time information for the whole process.
-
-n_min: The bottom end of the range, inclusive.  Default: 1.
-n_max: the upper end of the range, exclusive.
-step: The difference between each successive element in the range.  Default 1.
-time_info: If supplied as true, prints the amount of time taken to run the
-           simulation to the open file object passed in to outfile.  Default 
-           false.
-outfile: The open file object to print the data to.  Default sys.stdout.
-
-The return value is a 2D Numpy array.  For each entry along the 0th axis, 
-the 0th index is the given n in the range, the 1st index is the first roller's 
-win probability, and the 2nd index is the average number of rolls.
-
-n_min, n_max, and simulations must be positive.  n_min, n_max, step and 
-simulations must be castable as integers, and time must be castable as a 
-boolean.  Otherwise, a DRSimulateValueError is raised.  If any error occurs 
-printing to the file, a DRSimulateFileError is raised.
-"""
-
-
-def deathroll_mc_range(n_min, n_max=None, step=1, simulations=100_000,
-                       time_info=False, outfile=sys.stdout):
-    # to simulate Python's range function and numpy's arange function, we
-    # have the second argument represented by input if only one argument is
-    # supplied
-    if n_max == None:
-        n_min, n_max = 1, n_min
-
-    # Check arguments
-    n_min, n_max = __posint(n_min, "n_min"), __posint(n_max, "n_max")
-    simulations = __posint(simulations, "simulations")
-
-    # We check step manually, since it can be negative
-    try:
-        step = int(step)
-    except ValueError:
-        raise DRSimulateValueError("Cannot cast step as an integer.")
-
-    try:
-        time_info = bool(time_info)
-    except ValueError:
-        raise DRSimulateValueError("Cannot cast {} as boolean".format(
-            time_info))
-
-    try:
-        # Begin clock
-        if time_info:
-            print("Beginning Monte Carlo simulation for {} deathrolls for "
-                  "initial roll of n-sided die, for all in [{}, {}) with "
-                  "successive change of {}.".format(simulations, n_min,
-                                                    n_max, step))
-            start_time = perf_counter()
-
-        # run simulations
-        data = np.array([])
-        n_range = np.arange(n_min, n_max, step)
-        for n in n_range:
-            d_n = deathroll_mc(n, simulations)
-            data = np.append(data, (n, d_n[0], d_n[1]))
-
-        # reshape the data to a 2D array
-        data = data.reshape(len(n_range), 3)
-
-        # stop the clock
-        if time_info:
-            print("Time elapsed: {:.3f}s.".format(perf_counter() - start_time),
-                  file=outfile)
-    except OSError as ose:
-        raise DRSimualteFileError(ose.__str__())
-
-    return data
+    pass
 
 """If run as a standalone program, take in options and input into the
 deathroll_mc function.  Run the program with the sole option - h to see a
