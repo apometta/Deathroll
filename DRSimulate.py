@@ -175,9 +175,9 @@ if __name__ == "__main__":
     parser.add_argument("-s", action="store",
                         default=100_000, help="number of simulations to run "
                         "per n-sided die (default: 100000)",
-                        metavar="simulations", type=posint)
+                        metavar="simulations", type=__posint)
     parser.add_argument("n", action="store", help="the smallest (or only) "
-                        "number of sides for all dice", type=posint)
+                        "number of sides for all dice", type=__posint)
 
     args = parser.parse_args()
     # TODO: add option to take in range of arguments.  More annoying to do
@@ -187,4 +187,5 @@ if __name__ == "__main__":
     data = deathroll_mc(args.n, args.s, args.time)
     print("With initial die of {} sides, player 1 wins {:.3%} of the time "
           "with an average of {:.4f} rolls per game.".format(args.n,
-                                                             data[0], data[1]))
+                                                             data[0][0],
+                                                             data[0][1]))
