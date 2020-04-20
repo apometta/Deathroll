@@ -32,7 +32,7 @@ class DRSimulateFileError(OSError):
 """Local private function for testing if a number is a positive integer."""
 
 
-def __posint(arg, param):
+def __posint(arg, param="n"):
     try:
         arg = int(arg)
     except ValueError:
@@ -50,36 +50,97 @@ first of which corresponds to the first player's winrate for a given starting
 die of n sides, and the second is the average number of rolls.
 
 n: the number of sides on the initial die rolled.  This can either be a 
-single positive scalar, or a data structure that is Iterable (e.g. a list, 
-tuple, numpy.ndarray).  If it is an iterable data type, each element within 
-it will be considered an input for n, and the returned value will have as 
-many pairs as there are elements in n, with the ith index corresponding to 
-the number at n[i].  The returned numpy.ndarray is always a 2D array 
-regardless of what data type was inputted.
+   single positive scalar, or a data structure that is Iterable (e.g. a list, 
+   tuple, numpy.ndarray).  If it is an iterable data type, each element within 
+   it will be considered an input for n, and the returned value will have as 
+   many pairs as there are elements in n, with the ith index corresponding to 
+   the number at n[i].  The returned numpy.ndarray is always a 2D array 
+   regardless of what data type was inputted.
 time_all: whether or not to print timing information (how long it took to 
-perform ALL of the simulations) about the process as a whole (not each 
-individual value for n) to outfile.  Default False.
+          perform ALL of the simulations) about the process as a whole (not 
+          each individual value for n) to outfile.  Default False.
 simulations: the number of simulations to perform for each n.  Default 100,000.
 time_each: whether to print timing information (how long it took to perform 
-the simulations) to the file object passed in to outfile.  Unlike time_all, 
-this prints the time for all simulations for each individual possible n, as 
-opposed to the entirety of the simulation process.  If n is not iterable, this 
-argument is ignored. Default False.
+           the simulations) to the file object passed in to outfile.  Unlike 
+           time_all, this prints the time for all simulations for each 
+           individual possible n, as opposed to the entirety of the simulation 
+           process.  Default False.
 outfile: the open file object (NOT pathname or string) to print timing info 
-to.  If neither time_each or time_all is specified, this option is ignored.  
-Default sys.stdout.
+         to.  If neither time_each or time_all is specified, this option is 
+         ignored.  Default sys.stdout.
 
 If simulations, n itself (not iterable) or any element within (iterable) 
 cannot be casted as an integer, or is not positive, or if time_all or 
 time_each cannot be casted as booleans, a DRSimulateValueError is raised.  If 
-any OSError occurrs when attempting to print, a DRSimulateFileError is raised.
+any OSError occurrs when attempting to print, a DRSimulateFileError is 
+raised.  If both time_all or time_each are marked as True, but n is not 
+iterable, it is equivalent to marking only one as True.
 """
 
 
 def deathroll_mc(n, simulations=100_000, time_all=False, time_each=False,
                  outfile=sys.stdout):
+    # check all input except outfile
+    simulations = __posint(simulations, "simulations")
+    try:
+        time_all = bool(time_all)
+    except ValueError:
+        print("Argument {} for time_all not castable as a bool".format(
+            time_all))
+    try:
+        time_each = bool(time_each)
+    except ValueError:
+        print("Argument {} for time_each not castable as a bool.".format(
+            time_each))
+    if not isinstance(n, Iterable):
+        n = __posint(n)
+    else:
+        for i in n:
+            __posint(i)  # don't actually change the number - just type check
 
-    pass
+    # start timing if relevant
+    try:
+        # non iterable n
+        if not isinstance(n, Iterable):
+            if time_all or time_each:
+                time_all = True
+                time_each = False
+                range_timer = perf_counter()  # start timer for whole sim
+            n = np.arange(n, n + 1)
+        else:
+            if time_all:
+                range_timer = perf_counter()
+        # n is a range, iterate through it
+        data = np.array([])
+        for i in n:
+            if time_each:  # start individual timer
+                unit_timer = perf_counter()
+            p1_wins = 0
+            roll_count = 0
+            for j in range(simulations):
+                dr = drs.DeathrollSim(__posint(i))
+                p1_wins += 1 if dr.winner == 1 else 0
+                roll_count += dr.roll_count
+            data = np.append(data, [p1_wins / simulations,  # append data
+                                    roll_count / simulations])
+            if time_each:
+                print("Monte Carlo simulation of {} samples for inital roll "
+                      "of {}-sided die complete.  Time elapsed: {}s.".format(
+                          simulations, __posint(i),
+                          perf_counter() - unit_timer))
+        if time_all:
+            print("Monte Carlo simulation across {} complete.  Time "
+                  "elapsed: {}s.".format(str(n), perf_counter() - range_timer))
+    except OSError as ose:
+        # there's a number of errors that could have been caused with file
+        # I/O, each of which can be a separate subclass of OSError.  We just
+        # give the same string we receive, but labelling it as a
+        # DRSimulateFileError might assist the user in locating it
+        raise DRSimulateFileError(str(ose))
+
+    # reshape array properly
+    data = data.reshape(len(data) // 2, 2)
+    return data
 
 """If run as a standalone program, take in options and input into the
 deathroll_mc function.  Run the program with the sole option - h to see a
