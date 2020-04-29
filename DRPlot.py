@@ -7,6 +7,12 @@ generate graphs, to be used in a larger report."""
 
 # SETTINGS - change the properties of the graphs here
 
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+import DeathrollCalc as drc
+import DRSimulate as drs
+
 # use logarithmic x scale for the winrates
 wr_logx = True
 # the base of the log for the x scale
@@ -21,13 +27,13 @@ wr_first_alpha = wr_alpha / 10
 # use logarithmic x scale for the rolls
 rolls_logx = False
 # if the above option is true, this controls the base of the log for the scale
-rolls_logbase = 2
+rolls_logbase = math.e
 # alpha level for the rolls
 rolls_alpha = 0.5
 # alpha level for the first line of the rolls
 rolls_first_alpha = rolls_alpha / 10
-# whether or not to graph log2 along with the rolls
-rolls_log2 = False
+# whether or not to graph ln along with the rolls
+rolls_log = False
 # maximum y for the rolls graph - care when using this with rolls_log2
 # set to 0 for automatic calculation
 rolls_ymax = 0
@@ -37,11 +43,6 @@ calc_max = 1000
 mc_range = [2, 5, 10, 25, 50, 100, 500, 1000]
 # sample size for the Monte Carlo simuation
 mc_samples = 10_000
-
-import numpy as np
-import matplotlib.pyplot as plt
-import DeathrollCalc as drc
-import DRSimulate as drs
 
 # initializing data sets
 calc_range = range(1, calc_max + 1)
@@ -55,10 +56,9 @@ p1_winrate_calc = drc.p1_winrate(calc_range)
 # time spent
 p2_winrate_calc = drc.p2_winrate(calc_range)
 avg_rolls_calc = drc.avg_rolls(calc_range)
-if rolls_log2:  # the range of log2, from 1 to 1000
-    from math import log2
-    log2_range = np.fromfunction(np.vectorize(lambda n: log2(n + 1)),
-                                 (calc_max,))
+if rolls_log:  # the range of log, from 1 to 1000
+    log_range = np.fromfunction(np.vectorize(lambda n: math.log(n + 1)),
+                                (calc_max,))
 
 # We get make two separate figures - one for the winrates, and one for the
 # roll counts.  Might add a graph of the proportion between the two later.
@@ -119,14 +119,14 @@ plt.plot(mc_range, avg_rolls_mc, "x", color="darkgreen", alpha=rolls_alpha,
          label="Average Rolls per Game (Monte Carlo)")
 # Since the functions converge to each other as x approaches infinite, it
 # might be interesting to compare them
-if rolls_log2:
-    plt.plot(calc_range[1:], log2_range[1:], "-", color="orange",
+if rolls_log:
+    plt.plot(calc_range[1:], log_range[1:], "-", color="orange",
              alpha=rolls_alpha, label="log2")
 rolls.legend(loc="lower right")
 plt.plot(calc_range[:2], avg_rolls_calc[:2], "-", color="green",
          alpha=rolls_first_alpha)
-if rolls_log2:
-    plt.plot(calc_range[:2], log2_range[:2], "-", color="orange",
+if rolls_log:
+    plt.plot(calc_range[:2], log_range[:2], "-", color="orange",
              alpha=rolls_first_alpha)
 
 plt.show()
