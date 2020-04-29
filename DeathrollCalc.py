@@ -153,7 +153,7 @@ def p1_winrate(n):
 
 
 def p2_winrate(n):
-    return 1 - p1_winrate_range(m, n, step)
+    return 1 - p1_winrate(n)
 
 """Function for getting R(n) at a given value.   Otherwise similar arguments 
 and behavior as p1_winrate."""
