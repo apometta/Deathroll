@@ -9,28 +9,32 @@ generate graphs, to be used in a larger report."""
 
 # use logarithmic x scale for the winrates
 wr_logx = True
+# the base of the log for the x scale
+wr_logbase = 10
 # use percentages for the y axis for the winrates
 wr_pery = True
 # alpha level for the main winrate lines
 wr_alpha = 0.5
 # alpha level from 1 to 2 for winrates.  Set to 0 to disable or to wr_alpha
 # to match main data
-wr_first_alpha = 0.05
+wr_first_alpha = wr_alpha / 10
 # use logarithmic x scale for the rolls
 rolls_logx = False
+# if the above option is true, this controls the base of the log for the scale
+rolls_logbase = 2
 # alpha level for the rolls
 rolls_alpha = 0.5
 # alpha level for the first line of the rolls
-rolls_first_alpha = 0.05
+rolls_first_alpha = rolls_alpha / 10
 # whether or not to graph log2 along with the rolls
-rolls_log2 = True
+rolls_log2 = False
 # maximum y for the rolls graph - care when using this with rolls_log2
 # set to 0 for automatic calculation
 rolls_ymax = 0
-# domain for monte carlo
-mc_range = [2, 5, 10, 25, 50, 100, 500, 1000]
 # maximum value to calculate for rolls and winrate
 calc_max = 1000
+# domain for monte carlo
+mc_range = [2, 5, 10, 25, 50, 100, 500, 1000]
 # sample size for the Monte Carlo simuation
 mc_samples = 10_000
 
@@ -68,7 +72,7 @@ winrates = plt.subplot(111, facecolor="#EEEEEE", xlabel="/roll Value",
 # set the x axis as a log scale if necessary, but keep the tick values scalars
 if wr_logx:
     from matplotlib.ticker import ScalarFormatter
-    plt.xscale("log")
+    plt.xscale("log", basex=wr_logbase)
     winrates.xaxis.set_major_formatter(ScalarFormatter())
 # set percentages for y axis if necessary
 if wr_pery:
@@ -102,7 +106,7 @@ rolls = plt.subplot(111, facecolor="#EEEEEE", xlabel="/roll Value",
 # set x axis scale
 if rolls_logx:
     from matplotlib.ticker import ScalarFormatter
-    plt.xscale("log")
+    plt.xscale("log", basex=rolls_logbase)
     rolls.xaxis.set_major_formatter(ScalarFormatter())
 # set y maximum
 if rolls_ymax > 0:
