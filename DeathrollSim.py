@@ -78,10 +78,6 @@ class DeathrollSim:
         while not self.__roll():
             pass
 
-        # manually set roll count for n=1 - late addition
-        if self.initial_n == 1:
-            self.roll_count = 0
-
     """Performs an individual roll during the deathroll game.  Flagging the 
 	second argument resets the seed generator.  Also updates all appropriate 
 	properties.  Returns true if the game is over."""
