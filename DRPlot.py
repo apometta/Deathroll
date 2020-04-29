@@ -7,7 +7,6 @@ generate graphs, to be used in a larger report."""
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import log2
 import DeathrollCalc as drc
 import DRSimulate as drs
 
@@ -15,8 +14,8 @@ import DRSimulate as drs
 
 # use logarithmic x scale for the winrates
 wr_logx = True
-# use percentages for the y axis for the winrates (NOT YET IMPLEMENTED)
-wr_pery = False
+# use percentages for the y axis for the winrates
+wr_pery = True
 # alpha level for the main winrate lines
 wr_alpha = 0.5
 # alpha level from 1 to 2 for winrates.  Set to 0 to disable
@@ -41,6 +40,7 @@ p1_winrate_calc = drc.p1_winrate(calc_range)
 p2_winrate_calc = drc.p2_winrate(calc_range)
 avg_rolls_calc = drc.avg_rolls(calc_range)
 if rolls_log2:  # the range of log2, from 1 to 1000
+    from math import log2
     log2_range = np.fromfunction(np.vectorize(lambda n: log2(n + 1)), (1000,))
 
 # We get make two separate figures - one for the winrates, and one for the
@@ -53,6 +53,10 @@ winrate_fig.canvas.set_window_title("Deathroll Win Probability")
 winrates = plt.subplot(111, facecolor="#EEEEEE", xlabel="/roll value",
                        ylabel="Probability of winning",
                        xscale="log" if wr_logx else "linear")
+# set percentages for y axis if necessary
+if wr_pery:
+    from matplotlib.ticker import PercentFormatter
+    winrates.yaxis.set_major_formatter(PercentFormatter(xmax=1))
 # plotting the main data.  We only use the data for 2 and after for the main
 # alpha value, and separately plot the first 2 points
 plt.plot(calc_range[1:], p1_winrate_calc[1:], "-", color="red",
