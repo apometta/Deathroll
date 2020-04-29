@@ -33,8 +33,8 @@ __sig_p_w1_n = np.array([0], dtype=float)
 # The relevant coefficient is called c_r(n), and the cache for R(n) will be
 # stored in r_n
 
-# R(1) defined as 1.
-__r_n = np.array([1], dtype=float)
+# R(1) defined as 0.
+__r_n = np.array([0], dtype=float)
 
 # The sum R(k) for all k in the inclusive range [2, k].  Index 0 is for n = 1,
 # which isn't in the range and thus it's 0.
