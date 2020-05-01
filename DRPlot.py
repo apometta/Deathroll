@@ -13,6 +13,20 @@ import matplotlib.pyplot as plt
 import DeathrollCalc as drc
 import DRSimulate as drs
 
+"""Settings for both graphs."""
+
+# size of the figure, in inches according to matplotlib documentation
+graph_size = (16, 8)
+# and the resolution
+resolution = 110
+# maximum value to calculate for rolls and winrate
+calc_max = 1000
+# domain for monte carlo
+mc_range = [2, 5, 10, 25, 50, 100, 500, 1000]
+# sample size for the Monte Carlo simuation
+mc_samples = 10_000
+
+"""Settings for the graph of winrates."""
 
 # annotate certain points of the graph.  If any other option is changed from
 # the default for the winrates figure, turn this off, as it is dependent on
@@ -29,6 +43,9 @@ wr_alpha = 0.5
 # alpha level from 1 to 2 for winrates.  Set to 0 to disable or to wr_alpha
 # to match main data
 wr_first_alpha = wr_alpha / 8
+
+"""Settings for the graph of roll count."""
+
 # use logarithmic x scale for the rolls
 rolls_logx = False
 # if the above option is true, this controls the base of the log for the scale
@@ -42,14 +59,10 @@ rolls_log = False
 # maximum y for the rolls graph - care when using this with rolls_log
 # set to 0 for automatic calculation
 rolls_ymax = 0
-# maximum value to calculate for rolls and winrate
-calc_max = 1000
-# domain for monte carlo
-mc_range = [2, 5, 10, 25, 50, 100, 500, 1000]
-# sample size for the Monte Carlo simuation
-mc_samples = 10_000
 
-# initializing data sets
+"""Initialize the data sets.  Use small mc_samples value for testing, then 
+only increase when the graph's visual settings are to your liking."""
+
 calc_range = range(1, calc_max + 1)
 mc_data = drs.deathroll_mc(mc_range, mc_samples)
 p1_winrate_mc = mc_data[:, 0]
@@ -61,19 +74,20 @@ p1_winrate_calc = drc.p1_winrate(calc_range)
 # time spent
 p2_winrate_calc = drc.p2_winrate(calc_range)
 avg_rolls_calc = drc.avg_rolls(calc_range)
-if rolls_log:  # the range of log, from 1 to 1000
+if rolls_log:  # the range of ln, from 1 to 1000
     log_range = np.fromfunction(np.vectorize(lambda n: math.log(n + 1)),
                                 (calc_max,))
 
-# We get make two separate figures - one for the winrates, and one for the
-# roll counts.  Might add a graph of the proportion between the two later.
+"""Create the figure for the winrates."""
 
 # set up the figure for winrates
-winrate_fig = plt.figure(1, facecolor="#CCCCCC", figsize=(16, 8), dpi=110)
+winrate_fig = plt.figure(1, facecolor="#CCCCCC", figsize=graph_size,
+                         dpi=resolution)
 winrate_fig.canvas.set_window_title("Deathroll Win Probability")
 # setting the properties of the axes
 winrates = plt.subplot(111, facecolor="#EEEEEE", xlabel="/roll Value",
                        ylabel="Probability of winning")
+plt.yticks(np.arange(0, 1.1, 0.1))  # show every 10%
 # set the x axis as a log scale if necessary, but keep the tick values scalars
 if wr_logx:
     from matplotlib.ticker import ScalarFormatter
@@ -84,8 +98,11 @@ if wr_pery:
     from matplotlib.ticker import PercentFormatter
     winrates.yaxis.set_major_formatter(PercentFormatter(xmax=1))
 
-# plotting the main data.  We only use the data for 2 and after for the main
-# alpha value, and separately plot the first 2 points
+"""Perform the actual data plotting.  The data from [2, 1000] is plotted
+first with one alpha, for both the calculations and the Monte Carlo data.  The
+legend is then displayed, and the data for [1, 2] is only plotted after this,
+so it doesn't appear on the legend.  It uses a different alpha value."""
+
 plt.plot(calc_range[1:], p1_winrate_calc[1:], "-", color="red",
          alpha=wr_alpha, label="Player 1 Winrate (Exact Formula)")
 plt.plot(calc_range[1:], p2_winrate_calc[1:], "-", color="blue",
@@ -95,13 +112,13 @@ plt.plot(mc_range, p1_winrate_mc, "x", color="darkred", alpha=wr_alpha,
 plt.plot(mc_range, p2_winrate_mc, "x", color="darkblue", alpha=wr_alpha,
          label="Player 2 Winrate (Monte Carlo)")
 winrates.legend(loc="lower right")
-# plotting these later lets us draw the first line with a higher alpha, as
-# well as omit it from the legend
 plt.plot(calc_range[:2], p1_winrate_calc[:2], "-", color="red",
          alpha=wr_first_alpha)
 plt.plot(calc_range[:2], p2_winrate_calc[:2], "-", color="blue",
          alpha=wr_first_alpha)
-# perform annotations on the wr graph.
+
+"""Perform wr graph annotations."""
+
 if wr_annotate:
     arrow = dict(arrowstyle='-')
     ann_2 = "For a 2 sided-die, the smallest\n possible deathroll, "\
@@ -130,9 +147,10 @@ if wr_annotate:
     plt.annotate(ann_1000, xy=(1000, p2_winrate_calc[999]),
                  xytext=(625, 0.55), arrowprops=arrow, fontsize="small")
 
-"""
-    # And the figure for rolls
-rolls_fig = plt.figure(2, facecolor="#CCCCCC")
+"""Set up the rolls graph."""
+
+rolls_fig = plt.figure(2, facecolor="#CCCCCC", figsize=graph_size,
+                       dpi=resolution)
 rolls_fig.canvas.set_window_title("Average Rolls per Deathroll")
 # the axes for rolls is a bit simpler
 rolls = plt.subplot(111, facecolor="#EEEEEE", xlabel="/roll Value",
@@ -148,7 +166,9 @@ if rolls_logx:
 if rolls_ymax > 0:
     plt.ylim(0, rolls_ymax)
 
-# plot the roll data
+
+"""Plot the data for the rolls."""
+
 plt.plot(calc_range[1:], avg_rolls_calc[1:], "-", color="green",
          alpha=rolls_alpha, label="Average Rolls per Game (Exact Formula)")
 plt.plot(mc_range, avg_rolls_mc, "x", color="darkgreen", alpha=rolls_alpha,
@@ -164,5 +184,9 @@ plt.plot(calc_range[:2], avg_rolls_calc[:2], "-", color="green",
 if rolls_log:
     plt.plot(calc_range[:2], log_range[:2], "-", color="orange",
              alpha=rolls_first_alpha)
-"""
+
+# set the ticks to be one at a time based on current ylim
+plt.yticks(np.arange(0, plt.ylim()[1] + 1, 1))
+
+# finally, show the graph
 plt.show()
