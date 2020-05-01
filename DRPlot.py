@@ -43,6 +43,12 @@ wr_alpha = 0.5
 # alpha level from 1 to 2 for winrates.  Set to 0 to disable or to wr_alpha
 # to match main data
 wr_first_alpha = wr_alpha / 8
+# the ticks for the x axis.  Don't touch if you don't know what you're
+# looking at
+wr_xticks = np.hstack((np.arange(1, 25, 1), np.arange(25, 50, 5),
+                       np.arange(50, 100, 50), np.arange(100, 1001, 100)))
+# and the tick labels
+wr_xlabels = np.array([1, 2, 3, 4, 5, 10, 25, 50, 100, 500, 1000])
 
 """Settings for the graph of roll count."""
 
@@ -60,7 +66,15 @@ rolls_log = False
 # set to 0 for automatic calculation
 rolls_ymax = 0
 
-"""Initialize the data sets.  Use small mc_samples value for testing, then 
+"""Function for streamlining the annotations."""
+
+
+def annotate(text, x, xarray, xyt):
+    plt.annotate(text, xy=(x, xarray[x - 1]), xytext=xyt,
+                 arrowprops=dict(arrowstyle='-'), fontsize="small")
+
+
+"""Initialize the data sets.  Use small mc_samples value for testing, then
 only increase when the graph's visual settings are to your liking."""
 
 calc_range = range(1, calc_max + 1)
@@ -87,7 +101,6 @@ winrate_fig.canvas.set_window_title("Deathroll Win Probability")
 # setting the properties of the axes
 winrates = plt.subplot(111, facecolor="#EEEEEE", xlabel="/roll Value",
                        ylabel="Probability of winning")
-plt.yticks(np.arange(0, 1.1, 0.1))  # show every 10%
 # set the x axis as a log scale if necessary, but keep the tick values scalars
 if wr_logx:
     from matplotlib.ticker import ScalarFormatter
@@ -117,36 +130,36 @@ plt.plot(calc_range[:2], p1_winrate_calc[:2], "-", color="red",
 plt.plot(calc_range[:2], p2_winrate_calc[:2], "-", color="blue",
          alpha=wr_first_alpha)
 
+# set the xticks and yticks
+plt.xticks(wr_xticks)
+# unfortunately setting the x axis tick labels is harder than it seems when
+# you want it particular.
+ticklabels = []
+for i in wr_xticks:
+    if i in wr_xlabels:
+        ticklabels.append(i)
+    else:
+        ticklabels.append('')
+winrates.xaxis.set_ticklabels(ticklabels)
+plt.yticks(np.arange(0, 1.1, 0.1))
+
 """Perform wr graph annotations."""
 
 if wr_annotate:
-    arrow = dict(arrowstyle='-')
-    ann_2 = "For a 2 sided-die, the smallest\n possible deathroll, "\
-        "the current\nroller only has a 33.3% chance \nof winning."
-    # I won't lie, I only found the xytext location through guess and test
-    plt.annotate(ann_2, xy=(2, p1_winrate_calc[1]), xytext=(1.4, 0),
-                 arrowprops=arrow, fontsize="small",  wrap=True)
-    ann_5 = "When the die has 5 sides, the \ngap in winrate has already "\
-        "substantially\ndecreased: the current roller has \na 46.6% chance "\
-        "at winning."
-    pass
-    plt.annotate(ann_5, xy=(5, p1_winrate_calc[4]), xytext=(3, 0.175),
-                 arrowprops=arrow, fontsize="small")
-    ann_10 = "By /roll 10, this probability \nrises barely above 49%."
-    plt.annotate(ann_10, xy=(10, p1_winrate_calc[9]), xytext=(6, 0.37),
-                 arrowprops=arrow, fontsize="small")
-    ann_25 = "At /roll 25, the difference in \nwinrates is less than 0.5%."
-    plt.annotate(ann_25, xy=(25, p2_winrate_calc[24]), xytext=(14, 0.55),
-                 arrowprops=arrow, fontsize="small")
-    ann_100 = "For a deathroll of 100, \nthe difference in winrates is "\
-        "\nless than 0.02%."
-    pass
-    plt.annotate(ann_100, xy=(100, p1_winrate_calc[99]), xytext=(65, 0.40),
-                 arrowprops=arrow, fontsize="small")
-    ann_1000 = "At /roll 1000, the gap \nbetween winrates is \ninfinitesimal."
-    plt.annotate(ann_1000, xy=(1000, p2_winrate_calc[999]),
-                 xytext=(625, 0.55), arrowprops=arrow, fontsize="small")
-
+    annotate("For a 2 sided-die, the smallest\npossible deathroll, "
+             "the current\nroller only has a 33.3% chance \nof winning.",
+             2, p1_winrate_calc, (1.4, 0))
+    annotate("When the die has 5 sides, the \ngap in winrate has already "
+             "substantially\ndecreased: the current roller has \na 46.6% "
+             "chance at winning.", 5, p1_winrate_calc, (3, 0.175))
+    annotate("By /roll 10, this probability \nrises barely above 49%.",
+             10, p1_winrate_calc, (6, 0.37))
+    annotate("At /roll 25, the difference in \nwinrates is less than 0.5%.",
+             25, p2_winrate_calc, (14, 0.55))
+    annotate("For a deathroll of 100, \nthe difference in winrates is "
+             "\nless then 0.02%.", 100, p1_winrate_calc, (65, 0.40))
+    annotate("At /roll 1000, the gap \nbetween winrates is \ninfinitesimal.",
+             1000, p2_winrate_calc, (625, 0.55))
 """Set up the rolls graph."""
 
 rolls_fig = plt.figure(2, facecolor="#CCCCCC", figsize=graph_size,
