@@ -25,10 +25,11 @@ calc_max = 1000
 mc_range = [2, 5, 10, 25, 50, 100, 500, 1000]
 # sample size for the Monte Carlo simuation
 mc_samples = 5_000
-# string to represent sample size for annotations - this is the easy way
-mc_string = "100m"
+# string to represent sample size for annotations - set to empty string to
+# disable top annotation
+mc_string = "100M"
 # whether or not to even graph the winrate graph
-wr_graph = False
+wr_graph = True
 # and likewise for the rolls
 rolls_graph = True
 
@@ -58,6 +59,9 @@ wr_xlabels = np.array([1, 2, 3, 4, 5, 10, 25, 50, 100, 500, 1000])
 
 """Settings for the graph of roll count."""
 
+# add annotation for the rolls graph.  At current this just annotates the
+# sample size
+rolls_annotate = True
 # use logarithmic x scale for the rolls
 rolls_logx = False
 # if the above option is true, this controls the base of the log for the scale
@@ -177,9 +181,10 @@ if wr_graph:
                  "\ninfinitesimal.", 1000, p2_winrate_calc, (625, 0.42))
 
         # manually annotate the sample size
-        plt.annotate("Monte Carlo Sample Size: {}".format(mc_string),
-                     xy=(30, 1), fontsize="xx-large", fontweight="bold",
-                     color="maroon", ha="center")
+        if mc_string != "":
+            plt.annotate("Monte Carlo Sample Size: {}".format(mc_string),
+                         xy=(30, 1), fontsize="xx-large", fontweight="bold",
+                         color="maroon", ha="center")
 
 
 """Set up the rolls graph."""
@@ -205,6 +210,8 @@ if rolls_graph:
     # set the ticks to be one at a time based on current ylim
     plt.xticks(rolls_xticks)
     plt.yticks(np.arange(0, plt.ylim()[1] + 1, 1))
+    # background grid for rolls graph
+    plt.grid(axis='y', alpha=0.1)
 
     """Plot the data for the rolls."""
 
@@ -223,6 +230,12 @@ if rolls_graph:
     if rolls_log:
         plt.plot(calc_range[:2], log_range[:2], "-", color="orange",
                  alpha=rolls_first_alpha)
+
+    # annotate sample size for the rolls graph
+    if mc_string != "":
+        plt.annotate("Monte Carlo Sample Size: {}".format(mc_string),
+                     xy=(500, 9.55), fontsize="xx-large", fontweight="bold",
+                     color="maroon", ha="center")
 
 
 # finally, show the graph
