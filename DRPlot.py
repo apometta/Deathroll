@@ -25,8 +25,10 @@ calc_max = 1000
 mc_range = [2, 5, 10, 25, 50, 100, 500, 1000]
 # sample size for the Monte Carlo simuation
 mc_samples = 5_000
+# string to represent sample size for annotations - this is the easy way
+mc_string = "100m"
 # whether or not to even graph the winrate graph
-wr_graph = True
+wr_graph = False
 # and likewise for the rolls
 rolls_graph = True
 
@@ -68,7 +70,9 @@ rolls_first_alpha = rolls_alpha / 8
 rolls_log = False
 # maximum y for the rolls graph - care when using this with rolls_log
 # set to 0 for automatic calculation
-rolls_ymax = 0
+rolls_ymax = 10
+# ticks for the rolls graph
+rolls_xticks = np.arange(0, 1001, 100)
 
 """Function for streamlining the annotations."""
 
@@ -119,6 +123,21 @@ if wr_graph:
         from matplotlib.ticker import PercentFormatter
         winrates.yaxis.set_major_formatter(PercentFormatter(xmax=1))
 
+    # set the xticks and yticks
+    plt.xticks(wr_xticks)
+    # unfortunately setting the x axis tick labels is harder than it seems when
+    # you want it particular.
+    ticklabels = []
+    for i in wr_xticks:
+        if i in wr_xlabels:
+            ticklabels.append(i)
+        else:
+            ticklabels.append('')
+    winrates.xaxis.set_ticklabels(ticklabels)
+    plt.yticks(np.arange(0, 1.1, 0.1))
+    # and set the background grid
+    plt.grid(axis='y', alpha=0.1)
+
     """Perform the actual data plotting.  The data from [2, 1000] is plotted
 	first with one alpha, for both the calculations and the Monte Carlo data.  
 	The legend is then displayed, and the data for [1, 2] is only plotted 
@@ -139,21 +158,6 @@ if wr_graph:
     plt.plot(calc_range[:2], p2_winrate_calc[:2], "-", color="blue",
              alpha=wr_first_alpha)
 
-    # set the xticks and yticks
-    plt.xticks(wr_xticks)
-    # unfortunately setting the x axis tick labels is harder than it seems when
-    # you want it particular.
-    ticklabels = []
-    for i in wr_xticks:
-        if i in wr_xlabels:
-            ticklabels.append(i)
-        else:
-            ticklabels.append('')
-    winrates.xaxis.set_ticklabels(ticklabels)
-    plt.yticks(np.arange(0, 1.1, 0.1))
-    # and set the background grid
-    plt.grid(axis='y', alpha=0.1)
-
     """Perform wr graph annotations."""
 
     if wr_annotate:
@@ -171,6 +175,11 @@ if wr_graph:
                  "\nless then 0.02%.", 100, p1_winrate_calc, (65, 0.41))
         annotate("At /roll 1000, the gap \nbetween winrates is "
                  "\ninfinitesimal.", 1000, p2_winrate_calc, (625, 0.42))
+
+        # manually annotate the sample size
+        plt.annotate("Monte Carlo Sample Size: {}".format(mc_string),
+                     xy=(30, 1), fontsize="xx-large", fontweight="bold",
+                     color="maroon", ha="center")
 
 
 """Set up the rolls graph."""
@@ -193,6 +202,10 @@ if rolls_graph:
     if rolls_ymax > 0:
         plt.ylim(0, rolls_ymax)
 
+    # set the ticks to be one at a time based on current ylim
+    plt.xticks(rolls_xticks)
+    plt.yticks(np.arange(0, plt.ylim()[1] + 1, 1))
+
     """Plot the data for the rolls."""
 
     plt.plot(calc_range[1:], avg_rolls_calc[1:], "-", color="green",
@@ -211,8 +224,6 @@ if rolls_graph:
         plt.plot(calc_range[:2], log_range[:2], "-", color="orange",
                  alpha=rolls_first_alpha)
 
-    # set the ticks to be one at a time based on current ylim
-    plt.yticks(np.arange(0, plt.ylim()[1] + 1, 1))
 
 # finally, show the graph
 plt.show()
