@@ -17,7 +17,7 @@ import DRSimulate as drs
 
 # size of the figure, in inches according to matplotlib documentation
 graph_size = (16, 8)
-# and the resolution
+# and the resolution - a multiplier
 resolution = 110
 # maximum value to calculate for rolls and winrate
 calc_max = 1000
@@ -49,7 +49,7 @@ wr_alpha = 0.5
 wr_first_alpha = wr_alpha / 8
 # the ticks for the x axis.  Don't touch if you don't know what you're
 # looking at
-wr_xticks = np.hstack((np.arange(1, 25, 1), np.arange(25, 50, 5),
+wr_xticks = np.hstack((np.arange(1, 10, 1), np.arange(10, 50, 5),
                        np.arange(50, 100, 50), np.arange(100, 1001, 100)))
 # and the tick labels
 wr_xlabels = np.array([1, 2, 3, 4, 5, 10, 25, 50, 100, 500, 1000])
